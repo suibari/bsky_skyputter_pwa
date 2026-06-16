@@ -1,0 +1,15 @@
+{
+  "name": "SkyPutter",
+  "short_name": "SkyPutter",
+  "description": "Bluesky投稿専用アプリ",
+  "start_url": "/post",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0085ff",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

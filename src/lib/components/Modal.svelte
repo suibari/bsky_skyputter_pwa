@@ -1,0 +1,40 @@
+<script lang="ts">
+	let {
+		open = false,
+		title = '',
+		message = '',
+		confirmLabel = '削除',
+		onConfirm,
+		onCancel
+	}: {
+		open?: boolean;
+		title?: string;
+		message?: string;
+		confirmLabel?: string;
+		onConfirm: () => void;
+		onCancel: () => void;
+	} = $props();
+</script>
+
+{#if open}
+	<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+		<div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+			<h2 class="text-lg font-semibold text-gray-900 mb-2">{title}</h2>
+			<p class="text-gray-600 mb-6 text-sm">{message}</p>
+			<div class="flex gap-3 justify-end">
+				<button
+					onclick={onCancel}
+					class="px-4 py-2 rounded-xl border border-gray-200 text-gray-700 text-sm font-medium"
+				>
+					キャンセル
+				</button>
+				<button
+					onclick={onConfirm}
+					class="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium"
+				>
+					{confirmLabel}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
