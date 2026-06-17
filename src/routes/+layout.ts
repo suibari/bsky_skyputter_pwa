@@ -50,7 +50,7 @@ export async function load({ url }: { url: URL }) {
 	if (!isAuthenticated() && !isPublicPath) {
 		redirect(302, '/login');
 	}
-	if (isAuthenticated() && url.pathname === '/login') {
+	if (isAuthenticated() && (url.pathname === '/login' || url.pathname === '/oauth/callback')) {
 		redirect(302, '/post');
 	}
 
