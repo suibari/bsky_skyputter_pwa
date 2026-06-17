@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { PUBLIC_API_URL } from '$env/static/public';
-	import { getSession, clearSession } from '$lib/stores/auth.svelte';
+	import { getSession, clearSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
 
@@ -13,10 +13,13 @@
 
 	onMount(async () => {
 		const s = getSession();
-		if (s) {
+		if (s && !s.avatar) {
 			const agent = createAgent();
 			const profile = await agent.getProfile({ actor: s.did });
-			myAvatar = profile.data.avatar;
+			if (profile.data.avatar) {
+				myAvatar = profile.data.avatar;
+				cacheAvatar(profile.data.avatar);
+			}
 		}
 
 		if ('serviceWorker' in navigator && 'PushManager' in window) {

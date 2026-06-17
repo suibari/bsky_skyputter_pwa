@@ -33,3 +33,8 @@ export function clearSession(): void {
 	session = null;
 	localStorage.removeItem(SESSION_KEY);
 }
+
+export function cacheAvatar(avatar: string): void {
+	if (!session || session.avatar === avatar) return;
+	saveSession({ ...session, avatar });
+}

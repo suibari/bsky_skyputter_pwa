@@ -6,7 +6,7 @@
 	import ImagePicker from '$lib/components/ImagePicker.svelte';
 	import VideoPicker from '$lib/components/VideoPicker.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import { getSession } from '$lib/stores/auth.svelte';
+	import { getSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import type { BlobRef } from '@atproto/api';
@@ -30,10 +30,13 @@
 
 	onMount(async () => {
 		const session = getSession();
-		if (session) {
+		if (session && !session.avatar) {
 			const agent = createAgent();
 			const profile = await agent.getProfile({ actor: session.did });
-			myAvatar = profile.data.avatar;
+			if (profile.data.avatar) {
+				myAvatar = profile.data.avatar;
+				cacheAvatar(profile.data.avatar);
+			}
 		}
 
 		const id = $page.url.searchParams.get('draftId');
