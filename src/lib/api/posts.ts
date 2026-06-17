@@ -28,6 +28,7 @@ export async function createPost(params: {
 	images?: PostImageEmbed[];
 	video?: PostVideoEmbed;
 	replyTo?: { uri: string; cid: string; rootUri: string; rootCid: string };
+	quoteTo?: { uri: string; cid: string };
 }) {
 	const session = getSession();
 	if (!session) throw new Error('Not authenticated');
@@ -40,7 +41,26 @@ export async function createPost(params: {
 		createdAt: new Date().toISOString()
 	};
 
-	if (params.images && params.images.length > 0) {
+	if (params.quoteTo) {
+		if (params.images && params.images.length > 0) {
+			record.embed = {
+				$type: 'app.bsky.embed.recordWithMedia',
+				record: { $type: 'app.bsky.embed.record', record: { uri: params.quoteTo.uri, cid: params.quoteTo.cid } },
+				media: { $type: 'app.bsky.embed.images', images: params.images.map((img) => ({ image: img.blob, alt: img.alt })) }
+			};
+		} else if (params.video) {
+			record.embed = {
+				$type: 'app.bsky.embed.recordWithMedia',
+				record: { $type: 'app.bsky.embed.record', record: { uri: params.quoteTo.uri, cid: params.quoteTo.cid } },
+				media: { $type: 'app.bsky.embed.video', video: params.video.blob, alt: params.video.alt }
+			};
+		} else {
+			record.embed = {
+				$type: 'app.bsky.embed.record',
+				record: { uri: params.quoteTo.uri, cid: params.quoteTo.cid }
+			};
+		}
+	} else if (params.images && params.images.length > 0) {
 		record.embed = {
 			$type: 'app.bsky.embed.images',
 			images: params.images.map((img) => ({ image: img.blob, alt: img.alt }))

@@ -1,9 +1,19 @@
 <script lang="ts">
-	import type { AppBskyNotificationListNotifications } from '@atproto/api';
+	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
 
-	let { notification }: { notification: Notification } = $props();
+	let {
+		notification,
+		subjectPost,
+		onReply,
+		onQuote
+	}: {
+		notification: Notification;
+		subjectPost?: AppBskyFeedDefs.PostView;
+		onReply?: (uri: string, cid: string) => void;
+		onQuote?: (uri: string, cid: string) => void;
+	} = $props();
 
 	const reasonLabels: Record<string, string> = {
 		like: 'いいねしました',
@@ -26,6 +36,10 @@
 	const label = $derived(reasonLabels[notification.reason] ?? notification.reason);
 	const iconInfo = $derived(reasonIcons[notification.reason] ?? { color: '#6b7280', icon: 'bell' });
 	const record = $derived(notification.record as { text?: string } | undefined);
+	const canInteract = $derived(['reply', 'mention', 'quote'].includes(notification.reason));
+	const subjectRecord = $derived(subjectPost?.record as { text?: string } | undefined);
+
+	let expanded = $state(false);
 
 	function formatTime(iso: string): string {
 		const diff = Date.now() - new Date(iso).getTime();
@@ -39,7 +53,7 @@
 </script>
 
 <div class="px-4 py-3 border-b border-gray-100 flex gap-3 items-start">
-	<div class="relative flex-shrink-0">
+	<div class="relative shrink-0">
 		<div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
 			{#if notification.author.avatar}
 				<img
@@ -83,13 +97,59 @@
 			</p>
 			<div class="flex items-center gap-1.5 flex-shrink-0">
 				{#if !notification.isRead}
-					<span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
+					<span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
 				{/if}
 				<span class="text-xs text-gray-400">{formatTime(notification.indexedAt)}</span>
 			</div>
 		</div>
+
 		{#if record?.text}
-			<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{record.text}</p>
+			<button
+				class="text-left w-full"
+				onclick={() => (expanded = !expanded)}
+				aria-label={expanded ? '折りたたむ' : '展開する'}
+			>
+				<p class="text-xs text-gray-500 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{record.text}</p>
+				{#if !expanded}
+					<span class="text-xs text-gray-400">▼</span>
+				{:else}
+					<span class="text-xs text-gray-400">▲</span>
+				{/if}
+			</button>
+		{/if}
+
+		{#if subjectPost && subjectRecord?.text}
+			<div class="mt-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
+				<p class="text-xs text-gray-400 mb-0.5">あなたの投稿</p>
+				<p class="text-xs text-gray-600 line-clamp-2">{subjectRecord.text}</p>
+			</div>
+		{/if}
+
+		{#if canInteract && (onReply || onQuote)}
+			<div class="flex items-center gap-2 mt-1.5">
+				{#if onReply}
+					<button
+						onclick={() => onReply?.(notification.uri, notification.cid)}
+						class="p-1 text-gray-400 hover:text-[#0085ff]"
+						aria-label="返信"
+					>
+						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+						</svg>
+					</button>
+				{/if}
+				{#if onQuote}
+					<button
+						onclick={() => onQuote?.(notification.uri, notification.cid)}
+						class="p-1 text-gray-400 hover:text-[#f59e0b]"
+						aria-label="引用"
+					>
+						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+						</svg>
+					</button>
+				{/if}
+			</div>
 		{/if}
 	</div>
 </div>

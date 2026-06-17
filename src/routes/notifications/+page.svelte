@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { AppBskyNotificationListNotifications } from '@atproto/api';
+	import { goto } from '$app/navigation';
+	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
 	import NotificationItem from '$lib/components/NotificationItem.svelte';
 	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
@@ -8,6 +9,7 @@
 	import { getSession } from '$lib/stores/auth.svelte';
 	import { setUnreadCount } from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
+	import { createAgent } from '$lib/api/agent';
 	import { listNotifications, markSeen } from '$lib/api/notifications';
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
@@ -16,6 +18,28 @@
 	let cursor = $state<string | undefined>(undefined);
 	let loading = $state(false);
 	let hasMore = $state(true);
+	let subjectPostMap = $state<Map<string, AppBskyFeedDefs.PostView>>(new Map());
+
+	async function fetchSubjectPosts(newNotifications: Notification[]) {
+		const uris = newNotifications
+			.filter((n) => ['like', 'repost', 'quote'].includes(n.reason) && n.reasonSubject)
+			.map((n) => n.reasonSubject as string)
+			.filter((uri) => !subjectPostMap.has(uri));
+
+		if (uris.length === 0) return;
+
+		try {
+			const agent = createAgent();
+			const res = await agent.api.app.bsky.feed.getPosts({ uris });
+			const next = new Map(subjectPostMap);
+			for (const post of res.data.posts) {
+				next.set(post.uri, post);
+			}
+			subjectPostMap = next;
+		} catch {
+			// 取得失敗は無視
+		}
+	}
 
 	async function loadMore() {
 		if (loading || !hasMore) return;
@@ -25,11 +49,20 @@
 			notifications = [...notifications, ...data.notifications];
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
+			await fetchSubjectPosts(data.notifications);
 		} catch (e) {
 			showToast(e instanceof Error ? e.message : '読み込みに失敗しました', 'error');
 		} finally {
 			loading = false;
 		}
+	}
+
+	function handleReply(uri: string, cid: string) {
+		goto(`/post?replyTo=${encodeURIComponent(uri)}&replyCid=${encodeURIComponent(cid)}`);
+	}
+
+	function handleQuote(uri: string, cid: string) {
+		goto(`/post?quoteTo=${encodeURIComponent(uri)}&quoteCid=${encodeURIComponent(cid)}`);
 	}
 
 	onMount(async () => {
@@ -68,7 +101,12 @@
 		<p class="text-center text-sm text-gray-400 py-12">通知はありません</p>
 	{:else}
 		{#each notifications as notification (notification.uri)}
-			<NotificationItem {notification} />
+			<NotificationItem
+				{notification}
+				subjectPost={subjectPostMap.get(notification.reasonSubject ?? '')}
+				onReply={handleReply}
+				onQuote={handleQuote}
+			/>
 		{/each}
 		<InfiniteScroll {loading} {hasMore} onLoadMore={loadMore} />
 	{/if}

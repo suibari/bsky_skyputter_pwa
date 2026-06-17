@@ -9,7 +9,7 @@
 	import { getSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
-	import type { BlobRef } from '@atproto/api';
+	import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
 	import { createPost } from '$lib/api/posts';
 	import { uploadImage, uploadVideo } from '$lib/api/media';
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
@@ -23,6 +23,12 @@
 	let draftId = $state<string | null>(null);
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
 	let mediaFileInput: HTMLInputElement;
+
+	type ReplyContext = { uri: string; cid: string; rootUri: string; rootCid: string; text: string; authorHandle: string };
+	type QuoteContext = { uri: string; cid: string; text: string; authorHandle: string };
+
+	let replyContext = $state<ReplyContext | null>(null);
+	let quoteContext = $state<QuoteContext | null>(null);
 
 	const charCount = $derived(text.length);
 	const canPost = $derived(charCount > 0 && charCount <= 300 && !posting);
@@ -47,6 +53,53 @@
 				draftId = id;
 			}
 		}
+
+		const replyTo = $page.url.searchParams.get('replyTo');
+		const replyCid = $page.url.searchParams.get('replyCid');
+		if (replyTo && replyCid) {
+			try {
+				const agent = createAgent();
+				const res = await agent.api.app.bsky.feed.getPosts({ uris: [replyTo] });
+				const post = res.data.posts[0];
+				if (post) {
+					const rec = post.record as AppBskyFeedPost.Record;
+					const rootUri = rec.reply?.root?.uri ?? replyTo;
+					const rootCid = rec.reply?.root?.cid ?? replyCid;
+					replyContext = {
+						uri: replyTo,
+						cid: replyCid,
+						rootUri,
+						rootCid,
+						text: rec.text ?? '',
+						authorHandle: post.author.handle
+					};
+				}
+			} catch {
+				// フォールバック: テキストなしでコンテキストのみ保持
+				replyContext = { uri: replyTo, cid: replyCid, rootUri: replyTo, rootCid: replyCid, text: '', authorHandle: '' };
+			}
+		}
+
+		const quoteTo = $page.url.searchParams.get('quoteTo');
+		const quoteCid = $page.url.searchParams.get('quoteCid');
+		if (quoteTo && quoteCid) {
+			try {
+				const agent = createAgent();
+				const res = await agent.api.app.bsky.feed.getPosts({ uris: [quoteTo] });
+				const post = res.data.posts[0];
+				if (post) {
+					const rec = post.record as AppBskyFeedPost.Record;
+					quoteContext = {
+						uri: quoteTo,
+						cid: quoteCid,
+						text: rec.text ?? '',
+						authorHandle: post.author.handle
+					};
+				}
+			} catch {
+				quoteContext = { uri: quoteTo, cid: quoteCid, text: '', authorHandle: '' };
+			}
+		}
 	});
 
 	async function handlePost() {
@@ -69,7 +122,9 @@
 			await createPost({
 				text,
 				images: uploadedImages.length > 0 ? uploadedImages : undefined,
-				video: uploadedVideo
+				video: uploadedVideo,
+				replyTo: replyContext ?? undefined,
+				quoteTo: quoteContext ? { uri: quoteContext.uri, cid: quoteContext.cid } : undefined
 			});
 
 			if (draftId) {
@@ -80,6 +135,8 @@
 			text = '';
 			images = [];
 			video = null;
+			replyContext = null;
+			quoteContext = null;
 			showToast('投稿しました', 'success');
 		} catch (e) {
 			videoUploading = false;
@@ -143,7 +200,7 @@
 	}
 </script>
 
-<div class="flex flex-col h-full min-h-dvh">
+<div class="flex flex-col h-dvh">
 	<header class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
 		<h1 class="text-base font-semibold text-gray-900">今なにしてる？</h1>
 		<div class="flex items-center gap-2">
@@ -173,7 +230,7 @@
 		</div>
 	</header>
 
-	<div class="flex-1 flex flex-col px-4 pt-3 gap-3">
+	<div class="flex-1 flex flex-col px-4 pt-3 gap-3 overflow-y-auto">
 		{#if draftId}
 			<p class="text-xs text-[#0085ff] bg-blue-50 px-3 py-1.5 rounded-lg">下書きを編集中</p>
 		{/if}
@@ -191,11 +248,39 @@
 			</div>
 			<textarea
 				bind:value={text}
-				placeholder="いまなにしてる？"
+				placeholder={replyContext ? '返信する...' : quoteContext ? '引用コメントを入力...' : 'いまなにしてる？'}
 				class="flex-1 resize-none text-base text-gray-900 placeholder-gray-400 focus:outline-none min-h-30 leading-relaxed"
 				rows={5}
 			></textarea>
 		</div>
+
+		{#if replyContext}
+			<div class="ml-13 border-l-2 border-blue-200 pl-3 py-1 bg-blue-50 rounded-r-lg relative">
+				<button
+					onclick={() => (replyContext = null)}
+					class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
+					aria-label="返信をキャンセル"
+				>✕</button>
+				<p class="text-xs text-blue-500 font-medium mb-0.5">↩ 返信先 @{replyContext.authorHandle}</p>
+				{#if replyContext.text}
+					<p class="text-xs text-gray-600 line-clamp-2">{replyContext.text}</p>
+				{/if}
+			</div>
+		{/if}
+
+		{#if quoteContext}
+			<div class="ml-13 border border-amber-200 pl-3 pr-8 py-2 bg-amber-50 rounded-lg relative">
+				<button
+					onclick={() => (quoteContext = null)}
+					class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
+					aria-label="引用をキャンセル"
+				>✕</button>
+				<p class="text-xs text-amber-600 font-medium mb-0.5">❝ 引用 @{quoteContext.authorHandle}</p>
+				{#if quoteContext.text}
+					<p class="text-xs text-gray-600 line-clamp-2">{quoteContext.text}</p>
+				{/if}
+			</div>
+		{/if}
 
 		{#if images.length > 0}
 			<div class="pl-13">

@@ -4,11 +4,13 @@
 	let {
 		feedViewPost,
 		onDelete,
-		onReply
+		onReply,
+		onQuote
 	}: {
 		feedViewPost: AppBskyFeedDefs.FeedViewPost;
 		onDelete?: (uri: string) => void;
 		onReply?: (uri: string, cid: string) => void;
+		onQuote?: (uri: string, cid: string) => void;
 	} = $props();
 
 	const post = feedViewPost.post;
@@ -67,6 +69,7 @@
 		{/if}
 
 		<div class="flex items-center gap-4 mt-2">
+			<!-- いいね数・リポスト数は非表示（アプリコンセプト上不要）
 			<div class="flex items-center gap-1 text-gray-400 text-xs">
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
@@ -79,6 +82,7 @@
 				</svg>
 				{post.repostCount ?? 0}
 			</div>
+			-->
 
 			<div class="flex-1"></div>
 
@@ -90,6 +94,17 @@
 				>
 					<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+					</svg>
+				</button>
+			{/if}
+			{#if onQuote}
+				<button
+					onclick={() => onQuote?.(post.uri, post.cid)}
+					class="p-1 text-gray-400 hover:text-[#f59e0b]"
+					aria-label="引用"
+				>
+					<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
 					</svg>
 				</button>
 			{/if}

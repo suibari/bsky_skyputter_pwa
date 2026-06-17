@@ -65,6 +65,10 @@
 		goto(`/post?replyTo=${encodeURIComponent(uri)}&replyCid=${encodeURIComponent(cid)}`);
 	}
 
+	function handleQuote(uri: string, cid: string) {
+		goto(`/post?quoteTo=${encodeURIComponent(uri)}&quoteCid=${encodeURIComponent(cid)}`);
+	}
+
 	onMount(() => {
 		loadProfile();
 		loadMore();
@@ -124,6 +128,7 @@
 				{feedViewPost}
 				onDelete={(uri) => (deleteTarget = uri)}
 				onReply={handleReply}
+				onQuote={handleQuote}
 			/>
 		{/each}
 		<InfiniteScroll {loading} {hasMore} onLoadMore={loadMore} />

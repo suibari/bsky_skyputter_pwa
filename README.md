@@ -1,42 +1,222 @@
-# sv
+# SkyPutter
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+> しずか、でもとどく
 
-## Creating a project
+Bluesky（AT Protocol）への投稿に特化した PWA。タイムラインを持たず、書くことだけに集中できる。
 
-If you're seeing this, you've probably already done this step. Congrats!
+バージョン: v0.1.0 / 作者: suibari
 
-```sh
-# create a new project
-npx sv create my-app
+---
+
+## アプリの思想
+
+Bluesky はタイムラインが絶えず流れる。読むことに時間を取られ、書こうとしたことを忘れる。
+
+SkyPutter はタイムラインを持たない。投稿・自分の投稿確認・通知・下書き管理の 4 機能だけに絞ることで、アウトプットに集中できる。通知は受け取れるが、フィードは見られない——それが SkyPutter の設計思想。
+
+PWA として動作するため、ホーム画面に追加すればネイティブアプリのように使える。
+
+---
+
+## 機能一覧
+
+### ログイン（`/login`）
+
+| 機能 | 説明 |
+|------|------|
+| Bluesky OAuth ログイン | ハンドルを入力し、Bluesky 公式ページで認証 |
+| App Password ログイン | ハンドル＋アプリパスワードで直接認証 |
+
+### 投稿（`/post`）
+
+| 機能 | 説明 |
+|------|------|
+| テキスト投稿 | 最大 300 文字。文字数カウンター付き |
+| 画像添付 | 最大 4 枚 |
+| 動画添付 | 1 本のみ（画像との同時添付は不可） |
+| リプライ | 通知・投稿一覧から特定の投稿に返信 |
+| 引用投稿 | 他の投稿を引用してコメント |
+| 下書き保存 | 端末内（IndexedDB）のみに保存。サーバーには送信されない |
+
+### 投稿一覧 / プロフィール（`/posts`）
+
+| 機能 | 説明 |
+|------|------|
+| プロフィール表示 | アバター・表示名・ハンドル・自己紹介・フォロー数・フォロワー数・投稿数 |
+| 自分の投稿一覧 | 無限スクロール対応 |
+| 投稿の削除 | 確認ダイアログ付き |
+
+### 通知（`/notifications`）
+
+| 機能 | 説明 |
+|------|------|
+| 通知一覧 | いいね・リポスト・フォロー・リプライ・引用・メンション。無限スクロール対応 |
+| 既読処理 | 通知画面を開くと自動で既読になる |
+| リプライ・引用 | 通知からそのまま返信・引用操作が可能 |
+
+> プッシュ通知を設定していなくても、この画面で通知を確認できる。
+
+### 下書き（`/drafts`）
+
+| 機能 | 説明 |
+|------|------|
+| 下書き一覧 | 画像サムネイル・テキストプレビュー・保存日時を表示 |
+| 編集再開 | タップして投稿画面で続きを編集 |
+| 削除 | 確認ダイアログ付き |
+
+> 下書きは端末内のみに保存される。ブラウザのデータを消去すると下書きも削除される。
+
+### 設定（`/settings`）
+
+| 機能 | 説明 |
+|------|------|
+| プッシュ通知 | ON/OFF トグル。OFF にするとブラウザのプッシュ登録が解除される |
+| ログアウト | セッションを削除して /login へ遷移 |
+
+---
+
+## システム構成図
+
+```
+  ┌───────────────────────────────────────────────────────────────────────┐
+  │  ユーザー端末（ブラウザ）                                               │
+  │                                                                       │
+  │  ┌──────────────────────────────────┐   ┌───────────────────────────┐ │
+  │  │  SkyPutter PWA（SvelteKit）       │   │  Service Worker           │ │
+  │  │                                  │   │  ・Push 受信              │ │
+  │  │  /login  /post    /posts         │   │  ・通知を画面に表示        │ │
+  │  │  /notifications  /drafts         │   │  ・タップ → /notifications │ │
+  │  │  /settings                       │   └─────────────▲─────────────┘ │
+  │  │                                  │                 │ Push 配信      │
+  │  │  localStorage（セッション JWT）   │                 │               │
+  │  │  IndexedDB    （下書き）         │                 │               │
+  │  └──────┬────────────────┬──────────┘                 │               │
+  └─────────┼────────────────┼───────────────────────────┼───────────────┘
+            │                │                           │
+  ① ログイン / Push 購読登録  │ ② 投稿・通知・プロフィール  │
+            │                │    取得（直接通信）         │
+            ▼                ▼                           │
+  ┌────────────────────┐  ┌──────────────────────────────────────────┐
+  │  SkyPutter Server  │  │  Bluesky                                 │
+  │  (Node.js/Express) │  │                                          │
+  │                    │  │  ┌──────────────────────────────────┐    │
+  │  /oauth/*          │◀▶│  │  OAuth Server（認証フロー）       │    │
+  │  (認証)            │  │  └──────────────────────────────────┘    │
+  │                    │  │  ┌──────────────────────────────────┐    │
+  │  /api/push/*       │  │  │  Public API                      │◀───┘
+  │  (Push 購読管理)   │  │  │  （投稿・通知・プロフィール）      │
+  │                    │  │  └──────────────────────────────────┘
+  │  /api/             │  │  ┌──────────────────────────────────┐
+  │  notifications/*   │◀─┤  │  Jetstream                       │
+  │  (既読の代理送信)  │  │  │  （リアルタイムイベント WebSocket）│
+  │                    │  │  └──────────────────────────────────┘
+  └──────┬─────────────┘  └──────────────────────────────────────────┘
+         │
+    ┌────┴────────────────────────────────────────────┐
+    │                                                 │
+    ▼ 読み書き                                        ▼ Push 送信
+  ┌────────────────────┐                ┌──────────────────────────────┐
+  │  PostgreSQL        │                │  Web Push Service            │
+  │  users             │                │  （Google / Mozilla / Apple）│
+  │  push_subscriptions│                │                              │
+  │  vapid_keys        │                │  購読情報を元に該当端末へ     │
+  └────────────────────┘                │  プッシュを配信              │
+                                        └──────────────────────────────┘
+                                                       │ Push 配信
+                                                       ▼
+                                             Service Worker（上記参照）
 ```
 
-To recreate this project with the same configuration:
+**補足:**
+- ② の投稿・通知取得は SkyPutter Server を経由せず、PWA が Bluesky Public API に直接通信する
+- Jetstream は Bluesky のリアルタイムイベントストリーム。SkyPutter Server が WebSocket で常時接続し、いいね・リポスト・フォロー等のイベントを受け取る
 
-```sh
-# recreate this project
-npx sv@0.16.1 create --template minimal --types ts --add tailwindcss="plugins:none" --install npm bsky_skyputter
-```
+---
 
-## Developing
+## ユーザーフロー詳細
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### フロー A: ログインとサーバーへの登録
 
-```sh
-npm run dev
+SkyPutter へのログインは 2 つの方法があり、どちらでも同じ画面・機能を利用できる。
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+**OAuth でログインする場合**
 
-## Building
+1. `/login` を開き、Bluesky のハンドルを入力する（例: `yourname.bsky.social`）
+2. 「Bluesky でログイン」をタップ
+3. ブラウザが Bluesky 公式の認証ページへ遷移する
+4. Bluesky アカウントでの認証を承認する
+5. SkyPutter に戻り、投稿画面（`/post`）へ自動遷移する
+6. _（内部処理）_ SkyPutter Server がユーザーの DID とハンドルを PostgreSQL に登録する
 
-To create a production version of your app:
+**App Password でログインする場合**
 
-```sh
-npm run build
-```
+1. `/login` を開き、ハンドルと App Password を入力する
+   - App Password は Bluesky の設定（Settings → Privacy and security → App Passwords）で発行できる
+2. 「App Password でログイン」をタップ
+3. 投稿画面（`/post`）へ遷移する
+4. _（内部処理）_ SkyPutter Server がユーザーの DID とハンドルを PostgreSQL に登録する
 
-You can preview the production build with `npm run preview`.
+> **注意:** ログインしただけではプッシュ通知は届かない。プッシュ通知を受け取るには、別途フロー B の設定が必要。
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+---
+
+### フロー B: プッシュ通知の有効化
+
+1. ログイン済みの状態で `/settings`（設定画面）を開く
+2. 「Push通知」トグルをタップして ON にする
+3. ブラウザが通知の許可ダイアログを表示する
+4. 「許可」を選択する
+5. _（内部処理）_ ブラウザが Google / Mozilla / Apple のプッシュサービスに接続し、この端末専用の「プッシュ購読情報」（エンドポイント URL＋暗号化キー）を生成する
+6. _（内部処理）_ SkyPutter Server がその購読情報を PostgreSQL に保存する
+7. 設定完了。以降、Bluesky 上で通知イベントが発生すると、アプリを開いていなくてもプッシュ通知が届く
+
+通知を受け取りたくなくなった場合は、同じトグルで OFF にする。OFF にするとブラウザのプッシュ購読が解除される。
+
+---
+
+### フロー C: プッシュ通知が届くまでの仕組み
+
+フロー B の設定後、以下の流れでプッシュ通知が届く。
+
+1. Bluesky 上で自分の投稿に**いいね・リポスト・リプライ・引用**がされるか、または**フォロー・メンション**される
+2. Bluesky のリアルタイムイベントストリーム（Jetstream）がそのイベントを発信する
+3. SkyPutter Server が Jetstream に WebSocket で常時接続しており、イベントをリアルタイムで受け取る
+4. Server がイベントの対象ユーザー（DID）を確認し、SkyPutter に登録済みかつプッシュ通知が有効な場合、プッシュ送信を行う
+5. Google / Mozilla / Apple のプッシュサービスが該当端末のブラウザにプッシュを配信する
+6. ブラウザの Service Worker が起動し、通知を画面に表示する（アプリが閉じていても届く）
+7. 通知をタップすると、SkyPutter の通知画面（`/notifications`）が開く
+
+> プッシュ通知を設定していない場合でも、`/notifications` を手動で開けば通知一覧を確認できる。
+
+---
+
+## データの保存場所
+
+| データの種類 | 保存場所 |
+|------------|---------|
+| ログインセッション（アクセストークン） | 端末のブラウザ（localStorage） |
+| 下書き（テキスト・添付画像） | 端末のブラウザ（IndexedDB）※ サーバーには送信されない |
+| ユーザー識別情報（DID・ハンドル） | SkyPutter Server（PostgreSQL） |
+| プッシュ通知購読情報 | SkyPutter Server（PostgreSQL） |
+| 投稿・通知・プロフィール | Bluesky のサーバー（AT Protocol） |
+
+---
+
+## 対応環境
+
+**PWA としてインストール**
+- Android Chrome / Edge などの Chromium 系ブラウザ
+- Safari（iOS 16.4 以降 / macOS Ventura 以降）
+
+**プッシュ通知**
+- Chromium 系ブラウザ（最新版）
+- Safari（macOS Ventura 以降 / iOS 16 以降）
+
+**前提条件**
+- Bluesky アカウント
+
+---
+
+## 作者
+
+作者: [suibari](https://bsky.app/profile/suibari.com) / v0.1.0
