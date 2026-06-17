@@ -38,7 +38,8 @@ export async function createPost(params: {
 	const record: AppBskyFeedPost.Record = {
 		$type: 'app.bsky.feed.post',
 		text: params.text,
-		createdAt: new Date().toISOString()
+		createdAt: new Date().toISOString(),
+		langs: ['ja']
 	};
 
 	if (params.quoteTo) {

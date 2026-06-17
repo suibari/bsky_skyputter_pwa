@@ -38,6 +38,8 @@
 	const record = $derived(notification.record as { text?: string } | undefined);
 	const canInteract = $derived(['reply', 'mention', 'quote'].includes(notification.reason));
 	const subjectRecord = $derived(subjectPost?.record as { text?: string } | undefined);
+	// like/repost は自分の投稿テキスト、reply/mention/quote は相手のテキストを表示
+	const displayText = $derived(record?.text ?? subjectRecord?.text);
 
 	let expanded = $state(false);
 
@@ -103,30 +105,19 @@
 			</div>
 		</div>
 
-		{#if record?.text}
+		{#if displayText}
 			<button
 				class="text-left w-full"
 				onclick={() => (expanded = !expanded)}
 				aria-label={expanded ? '折りたたむ' : '展開する'}
 			>
-				<p class="text-xs text-gray-500 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{record.text}</p>
-				{#if !expanded}
-					<span class="text-xs text-gray-400">▼</span>
-				{:else}
-					<span class="text-xs text-gray-400">▲</span>
-				{/if}
+				<p class="text-xs text-gray-500 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
+				<span class="text-xs text-gray-400">{expanded ? '▲' : '▼'}</span>
 			</button>
 		{/if}
 
-		{#if subjectPost && subjectRecord?.text}
-			<div class="mt-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5">
-				<p class="text-xs text-gray-400 mb-0.5">あなたの投稿</p>
-				<p class="text-xs text-gray-600 line-clamp-2">{subjectRecord.text}</p>
-			</div>
-		{/if}
-
 		{#if canInteract && (onReply || onQuote)}
-			<div class="flex items-center gap-2 mt-1.5">
+			<div class="flex items-center justify-end gap-2 mt-1.5">
 				{#if onReply}
 					<button
 						onclick={() => onReply?.(notification.uri, notification.cid)}
