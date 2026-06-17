@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { BskyAgent } from '@atproto/api';
 	import { saveSession } from '$lib/stores/auth.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
@@ -13,19 +12,22 @@
 		const params = $page.url.searchParams;
 		const accessJwt = params.get('accessJwt');
 		const did = params.get('did');
+		const handle = params.get('handle');
 
-		if (!accessJwt || !did) {
+		if (!accessJwt || !did || !handle) {
 			error = 'コールバックパラメーターが不正です';
 			return;
 		}
 
 		try {
-			// handle を DID から取得する
-			const agent = new BskyAgent({ service: 'https://bsky.social' });
-			const profile = await agent.getProfile({ actor: did });
-			const handle = profile.data.handle;
+			const profileRes = await fetch(
+				`https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(did)}`
+			);
+			const avatar = profileRes.ok
+				? ((await profileRes.json()) as { avatar?: string }).avatar
+				: undefined;
 
-			saveSession({ accessJwt, did, handle, avatar: profile.data.avatar });
+			saveSession({ accessJwt, did, handle, avatar });
 			goto('/post', { replaceState: true });
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'ログイン処理に失敗しました';
