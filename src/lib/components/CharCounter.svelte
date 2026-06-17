@@ -12,7 +12,7 @@
 	const strokeColor = $derived(isOver ? '#ef4444' : isNear ? '#f59e0b' : '#0085ff');
 </script>
 
-<div class="relative w-8 h-8 flex items-center justify-center flex-shrink-0">
+<div class="relative w-8 h-8 flex items-center justify-center shrink-0">
 	<svg viewBox="0 0 24 24" class="absolute inset-0 -rotate-90 w-full h-full">
 		<circle cx="12" cy="12" r={r} fill="none" stroke="#e5e7eb" stroke-width="2" />
 		<circle
@@ -27,9 +27,7 @@
 			stroke-linecap="round"
 		/>
 	</svg>
-	{#if isNear}
-		<span class="text-[10px] font-medium {isOver ? 'text-red-500' : 'text-amber-500'}">
-			{remaining}
-		</span>
-	{/if}
+	<span class="text-[10px] font-medium {isOver ? 'text-red-500' : isNear ? 'text-amber-500' : 'text-gray-400'}">
+		{remaining}
+	</span>
 </div>

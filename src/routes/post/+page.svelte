@@ -22,11 +22,11 @@
 	let videoUploading = $state(false);
 	let draftId = $state<string | null>(null);
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
+	let mediaFileInput: HTMLInputElement;
 
 	const charCount = $derived(text.length);
 	const canPost = $derived(charCount > 0 && charCount <= 300 && !posting);
-	const canAddImage = $derived(images.length < 4 && video === null);
-	const canAddVideo = $derived(images.length === 0 && video === null);
+	const canAddMedia = $derived(images.length < 4 && video === null);
 
 	onMount(async () => {
 		const session = getSession();
@@ -109,6 +109,38 @@
 			savingDraft = false;
 		}
 	}
+
+	function handleMediaFileChange(e: Event) {
+		const files = Array.from((e.target as HTMLInputElement).files ?? []);
+		let hasConflict = false;
+
+		for (const file of files) {
+			if (file.type.startsWith('image/')) {
+				if (video !== null) {
+					hasConflict = true;
+					break;
+				}
+				if (images.length < 4) {
+					images = [...images, file];
+				}
+			} else if (file.type.startsWith('video/')) {
+				if (images.length > 0) {
+					hasConflict = true;
+					break;
+				}
+				if (video === null) {
+					video = file;
+					break;
+				}
+			}
+		}
+
+		if (hasConflict) {
+			showToast('動画と画像は同時に添付できません', 'error');
+		}
+
+		mediaFileInput.value = '';
+	}
 </script>
 
 <div class="flex flex-col h-full min-h-dvh">
@@ -147,7 +179,7 @@
 		{/if}
 
 		<div class="flex gap-3">
-			<div class="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+			<div class="w-10 h-10 rounded-full bg-gray-200 shrink-0 overflow-hidden">
 				{#if getSession()?.handle}
 					<img
 						src={myAvatar}
@@ -160,22 +192,18 @@
 			<textarea
 				bind:value={text}
 				placeholder="いまなにしてる？"
-				class="flex-1 resize-none text-base text-gray-900 placeholder-gray-400 focus:outline-none min-h-[120px] leading-relaxed"
+				class="flex-1 resize-none text-base text-gray-900 placeholder-gray-400 focus:outline-none min-h-30 leading-relaxed"
 				rows={5}
 			></textarea>
 		</div>
 
-		{#if images.length > 0 || canAddImage}
+		{#if images.length > 0}
 			<div class="pl-13">
-				{#if canAddImage}
-					<ImagePicker bind:images />
-				{:else if images.length > 0}
-					<ImagePicker bind:images />
-				{/if}
+				<ImagePicker bind:images />
 			</div>
 		{/if}
 
-		{#if video || canAddVideo}
+		{#if video || videoUploading}
 			<div class="pl-13">
 				{#if videoUploading}
 					<div class="flex items-center gap-2 text-sm text-gray-500">
@@ -191,35 +219,27 @@
 
 	<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
 		<div class="flex items-center gap-3">
-			{#if canAddImage}
-				<button
-					onclick={() => {
-						const el = document.querySelector<HTMLButtonElement>('[aria-label="画像を追加"]');
-						el?.click();
-					}}
-					class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-[#0085ff]"
-					aria-label="画像を追加"
-				>
-					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-					</svg>
-				</button>
-			{/if}
-			{#if canAddVideo}
-				<button
-					onclick={() => {
-						const el = document.querySelector<HTMLButtonElement>('[aria-label="動画を追加"]');
-						el?.click();
-					}}
-					class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-[#0085ff]"
-					aria-label="動画を選択"
-				>
-					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-					</svg>
-				</button>
-			{/if}
+			<button
+				onclick={() => mediaFileInput.click()}
+				disabled={!canAddMedia && video !== null}
+				class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-[#0085ff]
+					disabled:opacity-30 disabled:cursor-not-allowed"
+				aria-label="メディアを追加"
+			>
+				<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+				</svg>
+			</button>
 		</div>
 		<CharCounter count={charCount} />
 	</div>
 </div>
+
+<input
+	bind:this={mediaFileInput}
+	type="file"
+	accept="image/*,video/*"
+	multiple
+	class="hidden"
+	onchange={handleMediaFileChange}
+/>
