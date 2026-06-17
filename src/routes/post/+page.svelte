@@ -226,7 +226,7 @@
 					disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
 			>
 				{#if posting}
-					<LoadingSpinner size={14} />
+					<LoadingSpinner size={14} class="text-white" />
 				{/if}
 				投稿
 			</button>

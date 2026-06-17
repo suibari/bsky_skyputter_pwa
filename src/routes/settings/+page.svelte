@@ -5,10 +5,12 @@
 	import { getSession, clearSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { oauthClient } from '$lib/stores/oauth-client';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 
 	let pushEnabled = $state(false);
 	let pushLoading = $state(false);
+	let logoutLoading = $state(false);
 	const session = $derived(getSession());
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
 
@@ -100,6 +102,7 @@
 	}
 
 	async function handleLogout() {
+		logoutLoading = true;
 		const s = getSession();
 		if (s?.type === 'oauth') {
 			try {
@@ -143,21 +146,23 @@
 					<p class="text-sm font-medium text-gray-800">Push通知</p>
 					<p class="text-xs text-gray-400 mt-0.5">新着通知をプッシュ通知で受け取る</p>
 				</div>
-				<button
-					onclick={togglePush}
-					disabled={pushLoading}
-					class="relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none
-						{pushEnabled ? 'bg-[#0085ff]' : 'bg-gray-200'}
-						disabled:opacity-50"
-					role="switch"
-					aria-checked={pushEnabled}
-					aria-label="Push通知"
-				>
-					<span
-						class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200
-							{pushEnabled ? 'translate-x-6' : 'translate-x-0'}"
-					></span>
-				</button>
+				{#if pushLoading}
+					<LoadingSpinner size={24} />
+				{:else}
+					<button
+						onclick={togglePush}
+						class="relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none
+							{pushEnabled ? 'bg-[#0085ff]' : 'bg-gray-200'}"
+						role="switch"
+						aria-checked={pushEnabled}
+						aria-label="Push通知"
+					>
+						<span
+							class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200
+								{pushEnabled ? 'translate-x-6' : 'translate-x-0'}"
+						></span>
+					</button>
+				{/if}
 			</div>
 		</div>
 
@@ -165,8 +170,12 @@
 			<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">アカウント</p>
 			<button
 				onclick={handleLogout}
-				class="w-full text-left py-2 text-sm font-medium text-red-500"
+				disabled={logoutLoading}
+				class="py-2 text-sm font-medium text-red-500 flex items-center gap-2 disabled:opacity-50"
 			>
+				{#if logoutLoading}
+					<LoadingSpinner size={16} class="text-red-500" />
+				{/if}
 				ログアウト
 			</button>
 		</div>
