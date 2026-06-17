@@ -11,8 +11,9 @@ export function load({ url }: { url: URL }) {
 	loadSession();
 
 	const isLoginPage = url.pathname === '/login';
+	const isOAuthCallback = url.pathname === '/oauth/callback';
 
-	if (!isAuthenticated() && !isLoginPage) {
+	if (!isAuthenticated() && !isLoginPage && !isOAuthCallback) {
 		redirect(302, '/login');
 	}
 	if (isAuthenticated() && isLoginPage) {
