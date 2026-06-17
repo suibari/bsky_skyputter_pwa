@@ -16,6 +16,7 @@ export async function getAuthorFeed(did: string, cursor?: string) {
 export type PostImageEmbed = {
 	blob: BlobRef;
 	alt: string;
+	aspectRatio?: { width: number; height: number };
 };
 
 export type PostVideoEmbed = {
@@ -47,7 +48,7 @@ export async function createPost(params: {
 			record.embed = {
 				$type: 'app.bsky.embed.recordWithMedia',
 				record: { $type: 'app.bsky.embed.record', record: { uri: params.quoteTo.uri, cid: params.quoteTo.cid } },
-				media: { $type: 'app.bsky.embed.images', images: params.images.map((img) => ({ image: img.blob, alt: img.alt })) }
+				media: { $type: 'app.bsky.embed.images', images: params.images.map((img) => ({ image: img.blob, alt: img.alt, ...(img.aspectRatio ? { aspectRatio: img.aspectRatio } : {}) })) }
 			};
 		} else if (params.video) {
 			record.embed = {
@@ -64,7 +65,7 @@ export async function createPost(params: {
 	} else if (params.images && params.images.length > 0) {
 		record.embed = {
 			$type: 'app.bsky.embed.images',
-			images: params.images.map((img) => ({ image: img.blob, alt: img.alt }))
+			images: params.images.map((img) => ({ image: img.blob, alt: img.alt, ...(img.aspectRatio ? { aspectRatio: img.aspectRatio } : {}) }))
 		};
 	} else if (params.video) {
 		record.embed = {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { AppBskyFeedDefs } from '@atproto/api';
+	import ImageViewer from './ImageViewer.svelte';
 
 	let {
 		feedViewPost,
@@ -31,9 +32,19 @@
 
 	const timeAgo = $derived(calcTimeAgo(record.createdAt));
 
-	function getImageUrls(post: AppBskyFeedDefs.PostView): string[] {
-		const embed = post.embed as { images?: Array<{ thumb: string }> };
-		return embed?.images?.map((img) => img.thumb) ?? [];
+	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
+
+	function getImages(post: AppBskyFeedDefs.PostView): EmbedImage[] {
+		const embed = post.embed as { images?: EmbedImage[] } | undefined;
+		return embed?.images ?? [];
+	}
+
+	let viewerOpen = $state(false);
+	let viewerIndex = $state(0);
+
+	function openViewer(index: number) {
+		viewerIndex = index;
+		viewerOpen = true;
 	}
 </script>
 
@@ -60,10 +71,24 @@
 			</p>
 		{/if}
 
-		{#if getImageUrls(post).length > 0}
-			<div class="mt-2 grid gap-1 {getImageUrls(post).length === 1 ? 'grid-cols-1' : 'grid-cols-2'} rounded-xl overflow-hidden">
-				{#each getImageUrls(post) as url}
-					<img src={url} alt="添付画像" class="w-full aspect-square object-cover" />
+		{#if getImages(post).length > 0}
+			{@const imgs = getImages(post)}
+			<div class="mt-2 grid gap-1 {imgs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} rounded-xl overflow-hidden">
+				{#each imgs as img, i}
+					<button
+						class="w-full overflow-hidden focus:outline-none"
+						onclick={() => openViewer(i)}
+						aria-label="画像を拡大"
+					>
+						<img
+							src={img.thumb}
+							alt="添付画像"
+							class="w-full object-cover {imgs.length === 1 ? 'max-h-100' : 'aspect-square'}"
+							style={imgs.length === 1 && img.aspectRatio
+								? `aspect-ratio: ${img.aspectRatio.width} / ${img.aspectRatio.height}`
+								: ''}
+						/>
+					</button>
 				{/each}
 			</div>
 		{/if}
@@ -122,3 +147,11 @@
 		</div>
 	</div>
 </article>
+
+{#if viewerOpen}
+	<ImageViewer
+		images={getImages(post).map((img) => img.fullsize ?? img.thumb)}
+		startIndex={viewerIndex}
+		onClose={() => (viewerOpen = false)}
+	/>
+{/if}

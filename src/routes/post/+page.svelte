@@ -11,7 +11,7 @@
 	import { showToast } from '$lib/stores/toast.svelte';
 	import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
 	import { createPost } from '$lib/api/posts';
-	import { uploadImage, uploadVideo } from '$lib/api/media';
+	import { uploadImage, uploadVideo, getImageDimensions } from '$lib/api/media';
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
 
 	let text = $state('');
@@ -113,8 +113,11 @@
 			let uploadedVideo: { blob: BlobRef; alt: string } | undefined;
 
 			if (images.length > 0) {
-				const blobs = await Promise.all(images.map((f) => uploadImage(f)));
-				uploadedImages = blobs.map((blob) => ({ blob, alt: '' }));
+				const [blobs, dims] = await Promise.all([
+					Promise.all(images.map(uploadImage)),
+					Promise.all(images.map(getImageDimensions))
+				]);
+				uploadedImages = blobs.map((blob, i) => ({ blob, alt: '', aspectRatio: dims[i] }));
 			} else if (video) {
 				videoUploading = true;
 				const blob = await uploadVideo(video);

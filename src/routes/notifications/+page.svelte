@@ -21,12 +21,17 @@
 	let initialLoaded = $state(false);
 	let hasMore = $state(true);
 	let subjectPostMap = $state<Map<string, AppBskyFeedDefs.PostView>>(new Map());
+	let likedUris = $state<Set<string>>(new Set());
 
 	async function fetchSubjectPosts(newNotifications: Notification[]) {
-		const uris = newNotifications
+		const subjectUris = newNotifications
 			.filter((n) => ['like', 'repost', 'quote'].includes(n.reason) && n.reasonSubject)
-			.map((n) => n.reasonSubject as string)
-			.filter((uri) => !subjectPostMap.has(uri));
+			.map((n) => n.reasonSubject as string);
+		// reply/mention/quote の通知投稿自体も取得（viewer.like でいいね済み確認）
+		const notifUris = newNotifications
+			.filter((n) => ['reply', 'mention', 'quote'].includes(n.reason))
+			.map((n) => n.uri);
+		const uris = [...new Set([...subjectUris, ...notifUris])].filter((uri) => !subjectPostMap.has(uri));
 
 		if (uris.length === 0) return;
 
@@ -34,10 +39,15 @@
 			const agent = await createAgent();
 			const res = await agent.api.app.bsky.feed.getPosts({ uris });
 			const next = new Map(subjectPostMap);
+			const nextLiked = new Set(likedUris);
 			for (const post of res.data.posts) {
 				next.set(post.uri, post);
+				if ((post.viewer as { like?: string } | undefined)?.like) {
+					nextLiked.add(post.uri);
+				}
 			}
 			subjectPostMap = next;
+			likedUris = nextLiked;
 		} catch {
 			// 取得失敗は無視
 		}
@@ -62,6 +72,7 @@
 	async function handleLike(uri: string, cid: string) {
 		try {
 			await createLike(uri, cid);
+			likedUris = new Set([...likedUris, uri]);
 			showToast('いいねしました', 'success');
 		} catch (e) {
 			showToast(e instanceof Error ? e.message : 'いいねに失敗しました', 'error');
@@ -116,6 +127,7 @@
 			<NotificationItem
 				{notification}
 				subjectPost={subjectPostMap.get(notification.reasonSubject ?? '')}
+				liked={likedUris.has(notification.uri)}
 				onLike={handleLike}
 				onReply={handleReply}
 				onQuote={handleQuote}

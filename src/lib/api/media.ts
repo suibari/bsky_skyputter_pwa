@@ -42,6 +42,16 @@ export async function uploadImage(file: File): Promise<BlobRef> {
 	return res.data.blob;
 }
 
+export async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+	return new Promise((resolve) => {
+		const img = new Image();
+		const url = URL.createObjectURL(file);
+		img.onload = () => { resolve({ width: img.naturalWidth, height: img.naturalHeight }); URL.revokeObjectURL(url); };
+		img.onerror = () => { resolve({ width: 1, height: 1 }); URL.revokeObjectURL(url); };
+		img.src = url;
+	});
+}
+
 export async function uploadVideo(file: File): Promise<BlobRef> {
 	const agent = await createAgent();
 
