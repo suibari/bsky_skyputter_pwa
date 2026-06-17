@@ -20,7 +20,7 @@
 			icon: 'document'
 		},
 		{
-			href: '/posts',
+			href: '/profile',
 			label: 'プロフ',
 			icon: 'person'
 		},

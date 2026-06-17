@@ -29,7 +29,7 @@
 		if (!handle || !password) return;
 		loading = true;
 		try {
-			const res = await fetch(`${PUBLIC_API_URL}/oauth/app-password-login`, {
+			const res = await fetch(`${PUBLIC_API_URL}/login/app-password`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ identifier: handle.trim(), password })
