@@ -1,84 +1,47 @@
-import { PUBLIC_API_URL } from '$env/static/public';
-import { getSession } from '$lib/stores/auth.svelte';
-import { idbSaveDraft, idbGetDraft, idbDeleteDraft } from '$lib/db/drafts-idb';
+import { createAgent } from './agent';
+import { idbSaveDraftImages, idbGetDraftImages, idbDeleteDraftImages } from '$lib/db/drafts-idb';
 import type { Draft } from '$lib/types/draft';
 
-function authHeaders(): Record<string, string> {
-	const session = getSession();
-	if (!session) throw new Error('Not authenticated');
-	return {
-		'Content-Type': 'application/json',
-		Authorization: `Bearer ${session.accessJwt}`
-	};
-}
+export async function saveDraft(draft: Draft): Promise<string> {
+	const agent = createAgent();
+	const draftPayload = { posts: [{ text: draft.text }] };
 
-type ServerDraft = {
-	id: string;
-	text: string;
-	createdAt: string;
-	updatedAt: string;
-};
+	let id: string;
+	if (draft.id) {
+		await agent.api.app.bsky.draft.updateDraft({
+			draft: { id: draft.id, draft: draftPayload }
+		});
+		id = draft.id;
+	} else {
+		const res = await agent.api.app.bsky.draft.createDraft({ draft: draftPayload });
+		id = res.data.id;
+	}
 
-export async function saveDraft(draft: Draft): Promise<void> {
-	// テキストをサーバーへ保存
-	const res = await fetch(`${PUBLIC_API_URL}/api/drafts/${draft.id}`, {
-		method: 'PUT',
-		headers: authHeaders(),
-		body: JSON.stringify({ text: draft.text, createdAt: draft.createdAt })
-	});
-	if (!res.ok) throw new Error('Failed to save draft to server');
-
-	// 画像（Blob）をIndexedDBへ保存
-	await idbSaveDraft(draft);
+	await idbSaveDraftImages(id, draft.images);
+	return id;
 }
 
 export async function getDrafts(): Promise<Draft[]> {
-	const res = await fetch(`${PUBLIC_API_URL}/api/drafts`, {
-		headers: authHeaders()
-	});
-	if (!res.ok) throw new Error('Failed to fetch drafts');
-
-	const { drafts: serverDrafts } = (await res.json()) as { drafts: ServerDraft[] };
-
-	// サーバーのテキストとIndexedDBの画像をマージ
+	const agent = createAgent();
+	const res = await agent.api.app.bsky.draft.getDrafts({ limit: 100 });
 	return Promise.all(
-		serverDrafts.map(async (sd) => {
-			const local = await idbGetDraft(sd.id);
-			return {
-				id: sd.id,
-				text: sd.text,
-				images: local?.images ?? [],
-				createdAt: sd.createdAt,
-				updatedAt: sd.updatedAt
-			};
-		})
+		res.data.drafts.map(async (dv) => ({
+			id: dv.id,
+			text: dv.draft.posts[0]?.text ?? '',
+			images: await idbGetDraftImages(dv.id),
+			createdAt: dv.createdAt,
+			updatedAt: dv.updatedAt
+		}))
 	);
 }
 
 export async function getDraft(id: string): Promise<Draft | undefined> {
-	const res = await fetch(`${PUBLIC_API_URL}/api/drafts/${id}`, {
-		headers: authHeaders()
-	});
-	if (res.status === 404) return undefined;
-	if (!res.ok) throw new Error('Failed to fetch draft');
-
-	const sd = (await res.json()) as ServerDraft;
-	const local = await idbGetDraft(id);
-	return {
-		id: sd.id,
-		text: sd.text,
-		images: local?.images ?? [],
-		createdAt: sd.createdAt,
-		updatedAt: sd.updatedAt
-	};
+	const drafts = await getDrafts();
+	return drafts.find((d) => d.id === id);
 }
 
 export async function deleteDraft(id: string): Promise<void> {
-	const res = await fetch(`${PUBLIC_API_URL}/api/drafts/${id}`, {
-		method: 'DELETE',
-		headers: authHeaders()
-	});
-	if (!res.ok) throw new Error('Failed to delete draft');
-
-	await idbDeleteDraft(id);
+	const agent = createAgent();
+	await agent.api.app.bsky.draft.deleteDraft({ id });
+	await idbDeleteDraftImages(id);
 }

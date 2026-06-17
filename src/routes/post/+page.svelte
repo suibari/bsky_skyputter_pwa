@@ -152,18 +152,16 @@
 	async function handleSaveDraft() {
 		savingDraft = true;
 		try {
-			const id = draftId ?? crypto.randomUUID();
 			const now = new Date().toISOString();
-			const createdAt = draftCreatedAt ?? now;
-			await saveDraft({
-				id,
+			const id = await saveDraft({
+				id: draftId ?? '',
 				text,
 				images: images.map((f) => f as Blob),
-				createdAt,
+				createdAt: draftCreatedAt ?? now,
 				updatedAt: now
 			});
 			draftId = id;
-			draftCreatedAt = createdAt;
+			if (!draftCreatedAt) draftCreatedAt = now;
 			showToast('下書きを保存しました', 'success');
 		} catch {
 			showToast('下書きの保存に失敗しました', 'error');

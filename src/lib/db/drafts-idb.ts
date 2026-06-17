@@ -1,17 +1,18 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import type { Draft } from '$lib/types/draft';
 
 const DB_NAME = 'skyputter';
 const STORE_NAME = 'drafts';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+
+type DraftImages = { id: string; images: Blob[] };
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 function getDB(): Promise<IDBPDatabase> {
 	if (!dbPromise) {
 		dbPromise = openDB(DB_NAME, DB_VERSION, {
-			upgrade(db) {
-				if (!db.objectStoreNames.contains(STORE_NAME)) {
+			upgrade(db, oldVersion) {
+				if (oldVersion < 1) {
 					const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
 					store.createIndex('updatedAt', 'updatedAt');
 				}
@@ -21,17 +22,18 @@ function getDB(): Promise<IDBPDatabase> {
 	return dbPromise;
 }
 
-export async function idbSaveDraft(draft: Draft): Promise<void> {
+export async function idbSaveDraftImages(id: string, images: Blob[]): Promise<void> {
 	const db = await getDB();
-	await db.put(STORE_NAME, draft);
+	await db.put(STORE_NAME, { id, images } satisfies DraftImages);
 }
 
-export async function idbGetDraft(id: string): Promise<Draft | undefined> {
+export async function idbGetDraftImages(id: string): Promise<Blob[]> {
 	const db = await getDB();
-	return db.get(STORE_NAME, id);
+	const record = await db.get(STORE_NAME, id) as DraftImages | undefined;
+	return record?.images ?? [];
 }
 
-export async function idbDeleteDraft(id: string): Promise<void> {
+export async function idbDeleteDraftImages(id: string): Promise<void> {
 	const db = await getDB();
 	await db.delete(STORE_NAME, id);
 }

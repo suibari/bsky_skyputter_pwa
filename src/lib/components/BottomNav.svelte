@@ -9,11 +9,6 @@
 			icon: 'pencil'
 		},
 		{
-			href: '/posts',
-			label: 'プロフィール',
-			icon: 'person'
-		},
-		{
 			href: '/notifications',
 			label: '通知',
 			icon: 'bell',
@@ -23,6 +18,11 @@
 			href: '/drafts',
 			label: '下書き',
 			icon: 'document'
+		},
+		{
+			href: '/posts',
+			label: 'プロフ',
+			icon: 'person'
 		},
 		{
 			href: '/settings',
@@ -35,12 +35,12 @@
 </script>
 
 <nav
-	class="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-around px-1 z-40"
+	class="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center px-1 z-40"
 >
 	{#each tabs as tab}
 		<a
 			href={tab.href}
-			class="relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl min-w-[48px]
+			class="relative flex-1 flex flex-col items-center gap-0.5 py-1 rounded-xl
 				{isActive(tab.href) ? 'text-[#0085ff]' : 'text-gray-400'}"
 			aria-current={isActive(tab.href) ? 'page' : undefined}
 		>

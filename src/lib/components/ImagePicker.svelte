@@ -11,13 +11,26 @@
 
 	let fileInput: HTMLInputElement;
 	let previews = $state<string[]>([]);
+	const urlMap = new Map<File, string>();
 
 	$effect(() => {
-		const urls = images.map((f) => URL.createObjectURL(f));
-		previews = urls;
-		return () => {
-			urls.forEach((u) => URL.revokeObjectURL(u));
-		};
+		const currentSet = new Set(images);
+		for (const [file, url] of urlMap) {
+			if (!currentSet.has(file)) {
+				URL.revokeObjectURL(url);
+				urlMap.delete(file);
+			}
+		}
+		for (const file of images) {
+			if (!urlMap.has(file)) {
+				urlMap.set(file, URL.createObjectURL(file));
+			}
+		}
+		previews = images.map((f) => urlMap.get(f) ?? '');
+	});
+
+	onDestroy(() => {
+		for (const url of urlMap.values()) URL.revokeObjectURL(url);
 	});
 
 	function handleFileChange(e: Event) {

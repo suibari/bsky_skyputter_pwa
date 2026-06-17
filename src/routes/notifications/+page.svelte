@@ -17,6 +17,7 @@
 	let notifications = $state<Notification[]>([]);
 	let cursor = $state<string | undefined>(undefined);
 	let loading = $state(false);
+	let initialLoaded = $state(false);
 	let hasMore = $state(true);
 	let subjectPostMap = $state<Map<string, AppBskyFeedDefs.PostView>>(new Map());
 
@@ -85,6 +86,7 @@
 		}
 
 		await loadMore();
+		initialLoaded = true;
 	});
 </script>
 
@@ -93,11 +95,11 @@
 		<h1 class="text-base font-semibold text-gray-900">Notification</h1>
 	</header>
 
-	{#if notifications.length === 0 && loading}
+	{#if !initialLoaded}
 		<div class="flex justify-center py-12">
 			<LoadingSpinner />
 		</div>
-	{:else if notifications.length === 0 && !loading}
+	{:else if notifications.length === 0}
 		<p class="text-center text-sm text-gray-400 py-12">通知はありません</p>
 	{:else}
 		{#each notifications as notification (notification.uri)}
