@@ -6,6 +6,7 @@
 	let {
 		notification,
 		subjectPost,
+		threadTexts,
 		liked = false,
 		onLike,
 		onReply,
@@ -13,6 +14,7 @@
 	}: {
 		notification: Notification;
 		subjectPost?: AppBskyFeedDefs.PostView;
+		threadTexts?: string[];
 		liked?: boolean;
 		onLike?: (uri: string, cid: string) => void;
 		onReply?: (uri: string, cid: string) => void;
@@ -25,7 +27,8 @@
 		follow: 'フォローしました',
 		mention: 'にメンションしました',
 		reply: 'に返信しました',
-		quote: 'を引用しました'
+		quote: 'を引用しました',
+		'subscribed-post': '投稿しました'
 	};
 
 	const reasonIcons: Record<string, { color: string; icon: string }> = {
@@ -34,16 +37,19 @@
 		follow: { color: '#0085ff', icon: 'follow' },
 		mention: { color: '#8b5cf6', icon: 'at' },
 		reply: { color: '#0085ff', icon: 'reply' },
-		quote: { color: '#f59e0b', icon: 'quote' }
+		quote: { color: '#f59e0b', icon: 'quote' },
+		'subscribed-post': { color: '#8b5cf6', icon: 'post' }
 	};
 
 	const label = $derived(reasonLabels[notification.reason] ?? notification.reason);
 	const iconInfo = $derived(reasonIcons[notification.reason] ?? { color: '#6b7280', icon: 'bell' });
 	const record = $derived(notification.record as { text?: string } | undefined);
-	const canInteract = $derived(['reply', 'mention', 'quote'].includes(notification.reason));
+	const canInteract = $derived(['reply', 'mention', 'quote', 'subscribed-post'].includes(notification.reason));
 	const subjectRecord = $derived(subjectPost?.record as { text?: string } | undefined);
-	// like/repost は自分の投稿テキスト、reply/mention/quote は相手のテキストを表示
-	const displayText = $derived(record?.text ?? subjectRecord?.text);
+	// threadTexts がある場合はそちらを優先、ない場合は like/repost の subject テキスト
+	const displayText = $derived(
+		threadTexts && threadTexts.length > 0 ? null : (record?.text ?? subjectRecord?.text)
+	);
 
 	let expanded = $state(false);
 
@@ -85,6 +91,10 @@
 				<svg class="w-2.5 h-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
 					<path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zM2.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 018 18a9.953 9.953 0 01-5.385-1.572zM16.25 5.75a.75.75 0 00-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2z" />
 				</svg>
+			{:else if iconInfo.icon === 'post'}
+				<svg class="w-2.5 h-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+					<path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5zm7 1a1 1 0 10-2 0v1H6a1 1 0 100 2h1v1a1 1 0 102 0V9h1a1 1 0 100-2H9V6zm4 0a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-1v3l-3-3h-1V8h.5A2.5 2.5 0 0013 5.5V6z" />
+				</svg>
 			{:else}
 				<svg class="w-2.5 h-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
 					<path fill-rule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.67 2.43 2.902.848.137 1.705.248 2.57.331v3.443a.75.75 0 001.28.53l3.658-3.658A17.569 17.569 0 0015 14c2.236 0 4.43-.18 6.57-.524C23.007 13.245 24 11.986 24 10.574V5.426c0-1.413-.993-2.67-2.43-2.902A41.402 41.402 0 0015 2H10z" clip-rule="evenodd" />
@@ -109,7 +119,27 @@
 			</div>
 		</div>
 
-		{#if displayText}
+		{#if threadTexts && threadTexts.length > 0}
+			<button
+				class="text-left w-full mt-0.5"
+				onclick={() => (expanded = !expanded)}
+				aria-label={expanded ? '折りたたむ' : '展開する'}
+			>
+				{#if threadTexts.length === 1}
+					<p class="text-xs text-gray-500 {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
+				{:else}
+					<div class="space-y-0.5">
+						{#each threadTexts as text, i}
+							<p class="text-xs text-gray-500 {expanded ? '' : 'line-clamp-2'}">{text}</p>
+							{#if i < threadTexts.length - 1}
+								<div class="w-px h-2 bg-gray-300 ml-1"></div>
+							{/if}
+						{/each}
+					</div>
+				{/if}
+				<span class="text-xs text-gray-400">{expanded ? '▲' : '▼'}</span>
+			</button>
+		{:else if displayText}
 			<button
 				class="text-left w-full"
 				onclick={() => (expanded = !expanded)}
