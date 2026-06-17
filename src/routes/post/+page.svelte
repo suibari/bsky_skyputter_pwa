@@ -7,6 +7,7 @@
 	import VideoPicker from '$lib/components/VideoPicker.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { getSession } from '$lib/stores/auth.svelte';
+	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import type { BlobRef } from '@atproto/api';
 	import { createPost } from '$lib/api/posts';
@@ -20,6 +21,7 @@
 	let savingDraft = $state(false);
 	let videoUploading = $state(false);
 	let draftId = $state<string | null>(null);
+	let myAvatar = $state<string | undefined>(getSession()?.avatar);
 
 	const charCount = $derived(text.length);
 	const canPost = $derived(charCount > 0 && charCount <= 300 && !posting);
@@ -27,6 +29,13 @@
 	const canAddVideo = $derived(images.length === 0 && video === null);
 
 	onMount(async () => {
+		const session = getSession();
+		if (session) {
+			const agent = createAgent();
+			const profile = await agent.getProfile({ actor: session.did });
+			myAvatar = profile.data.avatar;
+		}
+
 		const id = $page.url.searchParams.get('draftId');
 		if (id) {
 			const draft = await getDraft(id);
@@ -138,7 +147,7 @@
 			<div class="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
 				{#if getSession()?.handle}
 					<img
-						src="https://cdn.bsky.app/img/avatar/plain/{getSession()?.did}/cropped@jpeg"
+						src={myAvatar}
 						alt="アバター"
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

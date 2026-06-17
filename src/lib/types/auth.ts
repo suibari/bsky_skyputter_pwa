@@ -1,6 +1,7 @@
 export type Session = {
 	accessJwt: string;
-	refreshJwt: string;
+	refreshJwt?: string;
 	did: string;
 	handle: string;
+	avatar?: string;
 };

@@ -3,13 +3,22 @@
 	import { goto } from '$app/navigation';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getSession, clearSession } from '$lib/stores/auth.svelte';
+	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
 
 	let pushEnabled = $state(false);
 	let pushLoading = $state(false);
 	const session = $derived(getSession());
+	let myAvatar = $state<string | undefined>(getSession()?.avatar);
 
 	onMount(async () => {
+		const s = getSession();
+		if (s) {
+			const agent = createAgent();
+			const profile = await agent.getProfile({ actor: s.did });
+			myAvatar = profile.data.avatar;
+		}
+
 		if ('serviceWorker' in navigator && 'PushManager' in window) {
 			try {
 				const reg = await navigator.serviceWorker.ready;
@@ -102,7 +111,7 @@
 			<div class="flex items-center gap-3 py-4 border-b border-gray-100">
 				<div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
 					<img
-						src="https://cdn.bsky.app/img/avatar/plain/{session.did}/cropped@jpeg"
+						src={myAvatar}
 						alt="アバター"
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

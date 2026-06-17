@@ -10,7 +10,8 @@ export function createAgent(): BskyAgent {
 					accessJwt: sess.accessJwt,
 					refreshJwt: sess.refreshJwt,
 					did: sess.did,
-					handle: sess.handle
+					handle: sess.handle,
+					avatar: getSession()?.avatar
 				});
 			} else if (evt === 'expired') {
 				clearSession();
@@ -25,7 +26,7 @@ export function createAgent(): BskyAgent {
 	if (session) {
 		agent.resumeSession({
 			accessJwt: session.accessJwt,
-			refreshJwt: session.refreshJwt,
+			refreshJwt: session.refreshJwt ?? '',
 			did: session.did,
 			handle: session.handle,
 			active: true
