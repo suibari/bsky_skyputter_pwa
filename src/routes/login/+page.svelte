@@ -45,8 +45,8 @@
 				const err = await res.json().catch(() => ({})) as { error?: string };
 				throw new Error(err.error ?? 'ログインに失敗しました');
 			}
-			const { did, handle: h, accessJwt } = await res.json() as { did: string; handle: string; accessJwt: string };
-			saveSession({ accessJwt, did, handle: h });
+			const { did, handle: h, accessJwt, refreshJwt } = await res.json() as { did: string; handle: string; accessJwt: string; refreshJwt?: string };
+			saveSession({ accessJwt, refreshJwt, did, handle: h });
 			goto('/post');
 		} catch (e) {
 			showToast(e instanceof Error ? e.message : 'ログインに失敗しました', 'error');
