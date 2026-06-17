@@ -14,7 +14,7 @@
 	onMount(async () => {
 		const s = getSession();
 		if (s && !s.avatar) {
-			const agent = createAgent();
+			const agent = await createAgent();
 			const profile = await agent.getProfile({ actor: s.did });
 			if (profile.data.avatar) {
 				myAvatar = profile.data.avatar;

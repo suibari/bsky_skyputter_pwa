@@ -3,7 +3,7 @@ import { getSession } from '$lib/stores/auth.svelte';
 import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
 
 export async function getAuthorFeed(did: string, cursor?: string) {
-	const agent = createAgent();
+	const agent = await createAgent();
 	const res = await agent.api.app.bsky.feed.getAuthorFeed({
 		actor: did,
 		filter: 'posts_no_replies',
@@ -33,7 +33,7 @@ export async function createPost(params: {
 	const session = getSession();
 	if (!session) throw new Error('Not authenticated');
 
-	const agent = createAgent();
+	const agent = await createAgent();
 
 	const record: AppBskyFeedPost.Record = {
 		$type: 'app.bsky.feed.post',
@@ -94,6 +94,6 @@ export async function deletePost(uri: string) {
 	const collection = parts[1];
 	const rkey = parts[2];
 
-	const agent = createAgent();
+	const agent = await createAgent();
 	return agent.api.com.atproto.repo.deleteRecord({ repo: did, collection, rkey });
 }

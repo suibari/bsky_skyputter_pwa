@@ -3,7 +3,7 @@ import { idbSaveDraftImages, idbGetDraftImages, idbDeleteDraftImages } from '$li
 import type { Draft } from '$lib/types/draft';
 
 export async function saveDraft(draft: Draft): Promise<string> {
-	const agent = createAgent();
+	const agent = await createAgent();
 	const draftPayload = { posts: [{ text: draft.text }] };
 
 	let id: string;
@@ -22,7 +22,7 @@ export async function saveDraft(draft: Draft): Promise<string> {
 }
 
 export async function getDrafts(): Promise<Draft[]> {
-	const agent = createAgent();
+	const agent = await createAgent();
 	const res = await agent.api.app.bsky.draft.getDrafts({ limit: 100 });
 	return Promise.all(
 		res.data.drafts.map(async (dv) => ({
@@ -41,7 +41,7 @@ export async function getDraft(id: string): Promise<Draft | undefined> {
 }
 
 export async function deleteDraft(id: string): Promise<void> {
-	const agent = createAgent();
+	const agent = await createAgent();
 	await agent.api.app.bsky.draft.deleteDraft({ id });
 	await idbDeleteDraftImages(id);
 }

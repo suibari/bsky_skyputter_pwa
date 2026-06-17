@@ -25,6 +25,7 @@
 	},
 	"dependencies": {
 		"@atproto/api": "^0.20.16",
+		"@atproto/oauth-client-browser": "^0.3.0",
 		"idb": "^8.0.3"
 	}
 }

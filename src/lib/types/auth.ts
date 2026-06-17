@@ -1,7 +1,8 @@
 export type Session = {
-	accessJwt: string;
+	accessJwt?: string;
 	refreshJwt?: string;
 	did: string;
 	handle: string;
 	avatar?: string;
+	type?: 'oauth' | 'app-password';
 };

@@ -37,13 +37,13 @@ async function compressImage(file: File): Promise<File> {
 
 export async function uploadImage(file: File): Promise<BlobRef> {
 	const compressed = await compressImage(file);
-	const agent = createAgent();
+	const agent = await createAgent();
 	const res = await agent.uploadBlob(compressed, { encoding: compressed.type });
 	return res.data.blob;
 }
 
 export async function uploadVideo(file: File): Promise<BlobRef> {
-	const agent = createAgent();
+	const agent = await createAgent();
 
 	const arrayBuffer = await file.arrayBuffer();
 	const uint8Array = new Uint8Array(arrayBuffer);

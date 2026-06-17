@@ -38,7 +38,7 @@
 	onMount(async () => {
 		const session = getSession();
 		if (session && !session.avatar) {
-			const agent = createAgent();
+			const agent = await createAgent();
 			const profile = await agent.getProfile({ actor: session.did });
 			if (profile.data.avatar) {
 				myAvatar = profile.data.avatar;
@@ -61,7 +61,7 @@
 		const replyCid = $page.url.searchParams.get('replyCid');
 		if (replyTo && replyCid) {
 			try {
-				const agent = createAgent();
+				const agent = await createAgent();
 				const res = await agent.api.app.bsky.feed.getPosts({ uris: [replyTo] });
 				const post = res.data.posts[0];
 				if (post) {
@@ -87,7 +87,7 @@
 		const quoteCid = $page.url.searchParams.get('quoteCid');
 		if (quoteTo && quoteCid) {
 			try {
-				const agent = createAgent();
+				const agent = await createAgent();
 				const res = await agent.api.app.bsky.feed.getPosts({ uris: [quoteTo] });
 				const post = res.data.posts[0];
 				if (post) {

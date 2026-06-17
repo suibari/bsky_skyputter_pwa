@@ -30,7 +30,7 @@
 		if (uris.length === 0) return;
 
 		try {
-			const agent = createAgent();
+			const agent = await createAgent();
 			const res = await agent.api.app.bsky.feed.getPosts({ uris });
 			const next = new Map(subjectPostMap);
 			for (const post of res.data.posts) {

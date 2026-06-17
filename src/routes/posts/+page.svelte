@@ -22,7 +22,7 @@
 		const session = getSession();
 		if (!session) return;
 		try {
-			const agent = createAgent();
+			const agent = await createAgent();
 			const res = await agent.getProfile({ actor: session.did });
 			profile = res.data;
 		} catch {

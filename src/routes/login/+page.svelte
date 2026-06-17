@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { saveSession } from '$lib/stores/auth.svelte';
+	import { oauthClient } from '$lib/stores/oauth-client';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
@@ -11,25 +10,19 @@
 	let password = $state('');
 	let loading = $state(false);
 
-	onMount(() => {
-		// OAuth コールバックから戻った場合（handle がないケースの fallback）
-		const params = $page.url.searchParams;
-		const accessJwt = params.get('accessJwt');
-		const did = params.get('did');
-		const h = params.get('handle');
-
-		if (accessJwt && did && h) {
-			saveSession({ accessJwt, did, handle: h });
-			goto('/post', { replaceState: true });
-		}
-	});
-
-	function handleOAuth() {
+	async function handleOAuth() {
 		if (!handle.trim()) {
 			showToast('Handle を入力してください', 'error');
 			return;
 		}
-		window.location.href = `${PUBLIC_API_URL}/oauth/login?handle=${encodeURIComponent(handle.trim())}`;
+		loading = true;
+		try {
+			await oauthClient.signIn(handle.trim());
+			// signIn は PDS へリダイレクトするため以降は実行されない
+		} catch (e) {
+			showToast(e instanceof Error ? e.message : 'OAuth ログインに失敗しました', 'error');
+			loading = false;
+		}
 	}
 
 	async function handlePasswordLogin() {
