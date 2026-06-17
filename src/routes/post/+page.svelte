@@ -207,7 +207,7 @@
 
 <div class="flex flex-col h-[calc(100dvh-4rem)]">
 	<header class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
-		<h1 class="text-base font-semibold text-gray-900">今なにしてる？</h1>
+		<img src="/skyputter_logo.png" alt="SkyPutter" class="h-7 object-contain" />
 		<div class="flex items-center gap-2">
 			<button
 				onclick={handleSaveDraft}

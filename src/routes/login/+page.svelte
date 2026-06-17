@@ -59,7 +59,7 @@
 <div class="flex flex-col min-h-dvh px-6 py-12">
 	<div class="flex-1 flex flex-col justify-center">
 		<div class="mb-10">
-			<h1 class="text-3xl font-bold text-gray-900 mb-2">SkyPutter</h1>
+			<img src="/skyputter_logo.png" alt="SkyPutter" class="h-12 object-contain mb-2" />
 			<p class="text-gray-500 text-sm">Bluesky へのアウトプット専用アプリ</p>
 		</div>
 

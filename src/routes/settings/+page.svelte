@@ -170,5 +170,9 @@
 				<p class="text-xs text-gray-400">Blueskyへのアウトプット専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するためのアプリ。</p>
 			</div>
 		</div>
+
+		<div class="py-8 flex justify-center">
+			<img src="/skyputter_logo.png" alt="SkyPutter" class="h-8 object-contain opacity-50" />
+		</div>
 	</div>
 </div>
