@@ -9,7 +9,6 @@
   "orientation": "portrait",
   "icons": [
     { "src": "/skyputter_icon.png", "sizes": "200x200", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/skyputter_icon.png", "sizes": "200x200", "type": "image/png", "purpose": "maskable" }
   ]
 }
