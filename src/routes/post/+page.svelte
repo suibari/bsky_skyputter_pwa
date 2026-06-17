@@ -21,6 +21,7 @@
 	let savingDraft = $state(false);
 	let videoUploading = $state(false);
 	let draftId = $state<string | null>(null);
+	let draftCreatedAt = $state<string | null>(null);
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
 	let mediaFileInput: HTMLInputElement;
 
@@ -50,7 +51,9 @@
 			const draft = await getDraft(id);
 			if (draft) {
 				text = draft.text;
+				images = draft.images.map((blob, i) => new File([blob], `draft-image-${i}`, { type: blob.type }));
 				draftId = id;
+				draftCreatedAt = draft.createdAt;
 			}
 		}
 
@@ -151,14 +154,16 @@
 		try {
 			const id = draftId ?? crypto.randomUUID();
 			const now = new Date().toISOString();
+			const createdAt = draftCreatedAt ?? now;
 			await saveDraft({
 				id,
 				text,
 				images: images.map((f) => f as Blob),
-				createdAt: draftId ? now : now,
+				createdAt,
 				updatedAt: now
 			});
 			draftId = id;
+			draftCreatedAt = createdAt;
 			showToast('下書きを保存しました', 'success');
 		} catch {
 			showToast('下書きの保存に失敗しました', 'error');
