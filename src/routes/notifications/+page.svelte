@@ -11,6 +11,7 @@
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { listNotifications, markSeen } from '$lib/api/notifications';
+	import { createLike } from '$lib/api/posts';
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
 
@@ -55,6 +56,15 @@
 			showToast(e instanceof Error ? e.message : '読み込みに失敗しました', 'error');
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function handleLike(uri: string, cid: string) {
+		try {
+			await createLike(uri, cid);
+			showToast('いいねしました', 'success');
+		} catch (e) {
+			showToast(e instanceof Error ? e.message : 'いいねに失敗しました', 'error');
 		}
 	}
 
@@ -106,6 +116,7 @@
 			<NotificationItem
 				{notification}
 				subjectPost={subjectPostMap.get(notification.reasonSubject ?? '')}
+				onLike={handleLike}
 				onReply={handleReply}
 				onQuote={handleQuote}
 			/>

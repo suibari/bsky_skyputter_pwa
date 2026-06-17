@@ -4,6 +4,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getSession, clearSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
+	import { oauthClient } from '$lib/stores/oauth-client';
 	import { showToast } from '$lib/stores/toast.svelte';
 
 	let pushEnabled = $state(false);
@@ -98,7 +99,15 @@
 		}
 	}
 
-	function handleLogout() {
+	async function handleLogout() {
+		const s = getSession();
+		if (s?.type === 'oauth') {
+			try {
+				await oauthClient.revoke(s.did);
+			} catch {
+				// revoke失敗でもローカルセッションは削除する
+			}
+		}
 		clearSession();
 		goto('/login');
 	}

@@ -88,6 +88,11 @@ export async function createPost(params: {
 	});
 }
 
+export async function createLike(uri: string, cid: string) {
+	const agent = await createAgent();
+	return agent.like(uri, cid);
+}
+
 export async function deletePost(uri: string) {
 	const parts = uri.replace('at://', '').split('/');
 	const did = parts[0];

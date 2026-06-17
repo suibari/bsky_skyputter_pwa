@@ -38,7 +38,10 @@
 		loading = true;
 		try {
 			const data = await getAuthorFeed(session.did, cursor);
-			posts = [...posts, ...data.feed];
+			const nonReposts = data.feed.filter(
+				(f) => !(f.reason as { $type?: string } | undefined)?.$type?.includes('Repost')
+			);
+			posts = [...posts, ...nonReposts];
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
 		} catch (e) {

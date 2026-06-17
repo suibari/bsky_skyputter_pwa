@@ -6,11 +6,13 @@
 	let {
 		notification,
 		subjectPost,
+		onLike,
 		onReply,
 		onQuote
 	}: {
 		notification: Notification;
 		subjectPost?: AppBskyFeedDefs.PostView;
+		onLike?: (uri: string, cid: string) => void;
 		onReply?: (uri: string, cid: string) => void;
 		onQuote?: (uri: string, cid: string) => void;
 	} = $props();
@@ -116,8 +118,19 @@
 			</button>
 		{/if}
 
-		{#if canInteract && (onReply || onQuote)}
+		{#if canInteract && (onLike || onReply || onQuote)}
 			<div class="flex items-center justify-end gap-2 mt-1.5">
+				{#if onLike}
+					<button
+						onclick={() => onLike?.(notification.uri, notification.cid)}
+						class="p-1 text-gray-400 hover:text-red-500"
+						aria-label="いいね"
+					>
+						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+						</svg>
+					</button>
+				{/if}
 				{#if onReply}
 					<button
 						onclick={() => onReply?.(notification.uri, notification.cid)}
@@ -136,7 +149,7 @@
 						aria-label="引用"
 					>
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+							<path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5h5.25v5.25L5.25 19.5H3l2.25-3.75H3V10.5zm7.5 0h5.25v5.25L12.75 19.5H10.5l2.25-3.75H10.5V10.5z" />
 						</svg>
 					</button>
 				{/if}
