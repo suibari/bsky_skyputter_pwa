@@ -36,24 +36,50 @@
 	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
 	type EmbedVideo = { playlist: string; thumbnail?: string; aspectRatio?: { width: number; height: number } };
 	type ExternalView = { uri: string; title: string; description: string; thumb?: string };
+	type QuotedRecord = { author: { handle: string; displayName?: string; avatar?: string }; text?: string };
+	type ViewRecord = { $type?: string; author?: QuotedRecord['author']; value?: { text?: string } };
+	type RawEmbed = {
+		$type?: string;
+		images?: EmbedImage[];
+		playlist?: string; thumbnail?: string; aspectRatio?: { width: number; height: number };
+		external?: ExternalView;
+		record?: ViewRecord;
+		media?: { $type?: string; images?: EmbedImage[]; playlist?: string; thumbnail?: string; aspectRatio?: { width: number; height: number }; external?: ExternalView };
+	};
 
 	function getImages(post: AppBskyFeedDefs.PostView): EmbedImage[] {
-		const embed = post.embed as { images?: EmbedImage[] } | undefined;
-		return embed?.images ?? [];
+		const embed = post.embed as RawEmbed | undefined;
+		return embed?.images ?? embed?.media?.images ?? [];
 	}
 
 	function getVideo(post: AppBskyFeedDefs.PostView): EmbedVideo | null {
-		const embed = post.embed as { $type?: string; playlist?: string; thumbnail?: string; aspectRatio?: { width: number; height: number } } | undefined;
-		if (embed?.$type === 'app.bsky.embed.video#view' && embed.playlist) {
-			return { playlist: embed.playlist, thumbnail: embed.thumbnail, aspectRatio: embed.aspectRatio };
-		}
+		const embed = post.embed as RawEmbed | undefined;
+		const src = embed?.$type === 'app.bsky.embed.video#view' ? embed
+			: embed?.media?.$type === 'app.bsky.embed.video#view' ? embed.media
+			: null;
+		if (src?.playlist) return { playlist: src.playlist, thumbnail: src.thumbnail, aspectRatio: src.aspectRatio };
 		return null;
 	}
 
 	function getExternal(post: AppBskyFeedDefs.PostView): ExternalView | null {
-		const embed = post.embed as { $type?: string; external?: ExternalView } | undefined;
+		const embed = post.embed as RawEmbed | undefined;
 		if (embed?.$type === 'app.bsky.embed.external#view') return embed.external ?? null;
+		if (embed?.media?.$type === 'app.bsky.embed.external#view') return embed.media.external ?? null;
 		return null;
+	}
+
+	function getQuotedRecord(post: AppBskyFeedDefs.PostView): QuotedRecord | null {
+		const embed = post.embed as RawEmbed | undefined;
+		// record#view: embed.record is the ViewRecord directly
+		// recordWithMedia#view: embed.record is wrapped as { record: ViewRecord }
+		const inner: ViewRecord | undefined =
+			embed?.$type === 'app.bsky.embed.record#view'
+				? embed.record
+				: embed?.$type === 'app.bsky.embed.recordWithMedia#view'
+				? (embed.record as unknown as { record?: ViewRecord } | undefined)?.record
+				: undefined;
+		if (!inner?.author) return null;
+		return { author: inner.author, text: inner.value?.text };
 	}
 
 	function hostname(uri: string): string {
@@ -155,6 +181,24 @@
 					{/if}
 				</div>
 			</a>
+		{/if}
+
+		{#if getQuotedRecord(post)}
+			{@const quoted = getQuotedRecord(post)!}
+			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+				<div class="flex items-center gap-1.5 mb-1">
+					{#if quoted.author.avatar}
+						<img src={quoted.author.avatar} alt={quoted.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+					{/if}
+					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
+						{quoted.author.displayName || quoted.author.handle}
+					</span>
+					<span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">@{quoted.author.handle}</span>
+				</div>
+				{#if quoted.text}
+					<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">{quoted.text}</p>
+				{/if}
+			</div>
 		{/if}
 
 		<div class="flex items-center gap-4 mt-2">

@@ -1,11 +1,27 @@
 <script lang="ts">
 	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
+	import ImageViewer from './ImageViewer.svelte';
+	import VideoViewer from './VideoViewer.svelte';
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
+	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
+	type EmbedVideo = { playlist: string; thumbnail?: string; aspectRatio?: { width: number; height: number } };
+	type ExternalView = { uri: string; title: string; description: string; thumb?: string };
+	type QuotedRecord = { author: { handle: string; displayName?: string; avatar?: string }; text?: string };
+	type ViewRecord = { $type?: string; author?: QuotedRecord['author']; value?: { text?: string } };
+	type RawEmbed = {
+		$type?: string;
+		images?: EmbedImage[];
+		playlist?: string; thumbnail?: string; aspectRatio?: { width: number; height: number };
+		external?: ExternalView;
+		record?: ViewRecord;
+		media?: { $type?: string; images?: EmbedImage[]; playlist?: string; thumbnail?: string; aspectRatio?: { width: number; height: number }; external?: ExternalView };
+	};
 
 	let {
 		notification,
 		subjectPost,
+		notifPost,
 		threadTexts,
 		liked = false,
 		onLike,
@@ -14,6 +30,7 @@
 	}: {
 		notification: Notification;
 		subjectPost?: AppBskyFeedDefs.PostView;
+		notifPost?: AppBskyFeedDefs.PostView;
 		threadTexts?: string[];
 		liked?: boolean;
 		onLike?: (uri: string, cid: string) => void;
@@ -51,7 +68,55 @@
 		threadTexts && threadTexts.length > 0 ? null : (record?.text ?? subjectRecord?.text)
 	);
 
+	// 画像・動画表示対象: THREAD_REASONS は通知投稿本体、それ以外は subject 投稿
+	const imagePost = $derived(canInteract ? notifPost : subjectPost);
+
+	function getImages(post: AppBskyFeedDefs.PostView | undefined): EmbedImage[] {
+		const embed = post?.embed as RawEmbed | undefined;
+		return embed?.images ?? embed?.media?.images ?? [];
+	}
+
+	function getVideo(post: AppBskyFeedDefs.PostView | undefined): EmbedVideo | null {
+		const embed = post?.embed as RawEmbed | undefined;
+		const src = embed?.$type === 'app.bsky.embed.video#view' ? embed
+			: embed?.media?.$type === 'app.bsky.embed.video#view' ? embed.media
+			: null;
+		if (src?.playlist) return { playlist: src.playlist, thumbnail: src.thumbnail, aspectRatio: src.aspectRatio };
+		return null;
+	}
+
+	function getExternal(post: AppBskyFeedDefs.PostView | undefined): ExternalView | null {
+		const embed = post?.embed as RawEmbed | undefined;
+		if (embed?.$type === 'app.bsky.embed.external#view') return embed.external ?? null;
+		if (embed?.media?.$type === 'app.bsky.embed.external#view') return embed.media.external ?? null;
+		return null;
+	}
+
+	function getQuotedRecord(post: AppBskyFeedDefs.PostView | undefined): QuotedRecord | null {
+		const embed = post?.embed as RawEmbed | undefined;
+		const inner: ViewRecord | undefined =
+			embed?.$type === 'app.bsky.embed.record#view'
+				? embed.record
+				: embed?.$type === 'app.bsky.embed.recordWithMedia#view'
+				? (embed.record as unknown as { record?: ViewRecord } | undefined)?.record
+				: undefined;
+		if (!inner?.author) return null;
+		return { author: inner.author, text: inner.value?.text };
+	}
+
+	function hostname(uri: string): string {
+		try { return new URL(uri).hostname; } catch { return uri; }
+	}
+
 	let expanded = $state(false);
+	let viewerOpen = $state(false);
+	let viewerIndex = $state(0);
+	let videoViewerOpen = $state(false);
+
+	function openViewer(index: number) {
+		viewerIndex = index;
+		viewerOpen = true;
+	}
 
 	function formatTime(iso: string): string {
 		const diff = Date.now() - new Date(iso).getTime();
@@ -150,6 +215,88 @@
 			</button>
 		{/if}
 
+		{#if getImages(imagePost).length > 0}
+			{@const imgs = getImages(imagePost)}
+			<div class="mt-2 grid gap-1 {imgs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} rounded-xl overflow-hidden">
+				{#each imgs as img, i}
+					<button
+						class="w-full overflow-hidden focus:outline-none"
+						onclick={() => openViewer(i)}
+						aria-label="画像を拡大"
+					>
+						<img
+							src={img.thumb}
+							alt="添付画像"
+							class="w-full object-cover {imgs.length === 1 ? 'max-h-60' : 'aspect-square'}"
+							style={imgs.length === 1 && img.aspectRatio
+								? `aspect-ratio: ${img.aspectRatio.width} / ${img.aspectRatio.height}`
+								: ''}
+						/>
+					</button>
+				{/each}
+			</div>
+		{/if}
+
+		{#if getVideo(imagePost)}
+			{@const vid = getVideo(imagePost)!}
+			<button
+				class="relative mt-2 w-full rounded-xl overflow-hidden bg-black focus:outline-none"
+				style={vid.aspectRatio ? `aspect-ratio: ${vid.aspectRatio.width} / ${vid.aspectRatio.height}` : 'aspect-ratio: 16 / 9'}
+				onclick={() => (videoViewerOpen = true)}
+				aria-label="動画を再生"
+			>
+				{#if vid.thumbnail}
+					<img src={vid.thumbnail} alt="動画サムネイル" class="w-full h-full object-cover" />
+				{/if}
+				<div class="absolute inset-0 flex items-center justify-center">
+					<div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
+						<svg class="w-5 h-5 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M8 5v14l11-7z" />
+						</svg>
+					</div>
+				</div>
+			</button>
+		{/if}
+
+		{#if getExternal(imagePost)}
+			{@const ext = getExternal(imagePost)!}
+			<a
+				href={ext.uri}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="block mt-2 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+			>
+				{#if ext.thumb}
+					<img src={ext.thumb} alt={ext.title} class="w-full max-h-32 object-cover" />
+				{/if}
+				<div class="px-3 py-2">
+					<p class="text-xs text-gray-400 truncate">{hostname(ext.uri)}</p>
+					<p class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{ext.title}</p>
+					{#if ext.description}
+						<p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{ext.description}</p>
+					{/if}
+				</div>
+			</a>
+		{/if}
+
+		{#if getQuotedRecord(imagePost)}
+			{@const quoted = getQuotedRecord(imagePost)!}
+			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+				<div class="flex items-center gap-1.5 mb-1">
+					{#if quoted.author.avatar}
+						<img src={quoted.author.avatar} alt={quoted.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+					{/if}
+					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
+						{quoted.author.displayName || quoted.author.handle}
+					</span>
+					<span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">@{quoted.author.handle}</span>
+				</div>
+				{#if quoted.text}
+					<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">{quoted.text}</p>
+				{/if}
+			</div>
+		{/if}
+
 		{#if canInteract && (onLike || onReply || onQuote)}
 			<div class="flex items-center justify-end gap-2 mt-1.5">
 				{#if onLike}
@@ -189,3 +336,20 @@
 		{/if}
 	</div>
 </div>
+
+{#if viewerOpen}
+	<ImageViewer
+		images={getImages(imagePost).map((img) => img.fullsize ?? img.thumb)}
+		startIndex={viewerIndex}
+		onClose={() => (viewerOpen = false)}
+	/>
+{/if}
+
+{#if videoViewerOpen}
+	{@const vid = getVideo(imagePost)!}
+	<VideoViewer
+		src={vid.playlist}
+		thumbnail={vid.thumbnail}
+		onClose={() => (videoViewerOpen = false)}
+	/>
+{/if}

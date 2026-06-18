@@ -20,14 +20,24 @@
 			navigator.serviceWorker.register('/service-worker.js').catch(() => {});
 		}
 
-		if (isAuthenticated()) {
-			try {
-				const count = await getUnreadCount();
-				setUnreadCount(count);
-			} catch {
-				// ignore
+		const refreshCount = async () => {
+			if (isAuthenticated()) {
+				try {
+					const count = await getUnreadCount();
+					setUnreadCount(count);
+				} catch {
+					// ignore
+				}
 			}
-		}
+		};
+
+		await refreshCount();
+
+		const onVisibility = () => {
+			if (document.visibilityState === 'visible') refreshCount();
+		};
+		document.addEventListener('visibilitychange', onVisibility);
+		return () => document.removeEventListener('visibilitychange', onVisibility);
 	});
 </script>
 

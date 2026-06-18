@@ -236,6 +236,7 @@
 			<NotificationItem
 				{notification}
 				subjectPost={subjectPostMap.get(notification.reasonSubject ?? '')}
+				notifPost={subjectPostMap.get(notification.uri)}
 				threadTexts={THREAD_REASONS.includes(notification.reason) ? getThreadTexts(notification.uri) : undefined}
 				liked={likedUris.has(notification.uri)}
 				onLike={handleLike}
