@@ -7,12 +7,15 @@
 	import { isAuthenticated } from '$lib/stores/auth.svelte';
 	import { setUnreadCount } from '$lib/stores/notifications.svelte';
 	import { getUnreadCount } from '$lib/api/notifications';
+	import { loadTheme } from '$lib/stores/theme.svelte';
 
 	let { children } = $props();
 
 	const showNav = $derived(isAuthenticated() && $page.url.pathname !== '/login');
 
 	onMount(async () => {
+		loadTheme();
+
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/service-worker.js').catch(() => {});
 		}
@@ -28,7 +31,7 @@
 	});
 </script>
 
-<div class="flex flex-col min-h-dvh max-w-md mx-auto bg-white">
+<div class="flex flex-col min-h-dvh max-w-md mx-auto bg-white dark:bg-gray-900">
 	<main class="flex-1 {showNav ? 'pb-16' : ''}">
 		{@render children()}
 	</main>

@@ -79,15 +79,15 @@
 </script>
 
 <div>
-	<header class="px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-		<h1 class="text-base font-semibold text-gray-900">プロフィール</h1>
+	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">プロフィール</h1>
 	</header>
 
 	<!-- プロフィールカード -->
-	<div class="px-4 py-4 border-b border-gray-100">
+	<div class="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
 		{#if profile}
 			<div class="flex items-center gap-3">
-				<div class="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0">
+				<div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden shrink-0">
 					<img
 						src={profile.avatar}
 						alt="アバター"
@@ -96,24 +96,24 @@
 					/>
 				</div>
 				<div class="min-w-0">
-					<p class="font-bold text-gray-900 truncate">{profile.displayName ?? profile.handle}</p>
-					<p class="text-sm text-gray-400">@{profile.handle}</p>
+					<p class="font-bold text-gray-900 dark:text-gray-50 truncate">{profile.displayName ?? profile.handle}</p>
+					<p class="text-sm text-gray-400 dark:text-gray-500">@{profile.handle}</p>
 				</div>
 			</div>
 			{#if profile.description}
-				<p class="text-sm text-gray-700 mt-3 whitespace-pre-wrap">{profile.description}</p>
+				<p class="text-sm text-gray-700 dark:text-gray-300 mt-3 whitespace-pre-wrap">{profile.description}</p>
 			{/if}
-			<div class="flex gap-4 mt-3 text-sm text-gray-500">
-				<span><b class="text-gray-900">{profile.followsCount ?? 0}</b> フォロー</span>
-				<span><b class="text-gray-900">{profile.followersCount ?? 0}</b> フォロワー</span>
-				<span><b class="text-gray-900">{profile.postsCount ?? 0}</b> 投稿</span>
+			<div class="flex gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
+				<span><b class="text-gray-900 dark:text-gray-50">{profile.followsCount ?? 0}</b> フォロー</span>
+				<span><b class="text-gray-900 dark:text-gray-50">{profile.followersCount ?? 0}</b> フォロワー</span>
+				<span><b class="text-gray-900 dark:text-gray-50">{profile.postsCount ?? 0}</b> 投稿</span>
 			</div>
 		{:else}
 			<div class="flex items-center gap-3">
-				<div class="w-16 h-16 rounded-full bg-gray-100 animate-pulse shrink-0"></div>
+				<div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse shrink-0"></div>
 				<div class="space-y-2">
-					<div class="h-4 w-28 bg-gray-100 rounded animate-pulse"></div>
-					<div class="h-3 w-20 bg-gray-100 rounded animate-pulse"></div>
+					<div class="h-4 w-28 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+					<div class="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 				</div>
 			</div>
 		{/if}
@@ -124,7 +124,7 @@
 			<LoadingSpinner />
 		</div>
 	{:else if posts.length === 0 && !loading}
-		<p class="text-center text-sm text-gray-400 py-12">まだ投稿がありません</p>
+		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">まだ投稿がありません</p>
 	{:else}
 		{#each posts as feedViewPost (feedViewPost.post.uri)}
 			<PostCard

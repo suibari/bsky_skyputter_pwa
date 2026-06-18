@@ -7,6 +7,7 @@
 	import { oauthClient } from '$lib/stores/oauth-client';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
+	import { getTheme, setTheme, type Theme } from '$lib/stores/theme.svelte';
 
 	let pushEnabled = $state(false);
 	let pushLoading = $state(false);
@@ -114,17 +115,24 @@
 		clearSession();
 		goto('/login');
 	}
+
+	const themeLabels: Record<Theme, string> = {
+		system: 'システム',
+		light: 'ライト',
+		dark: 'ダーク'
+	};
+	const themeOptions: Theme[] = ['system', 'light', 'dark'];
 </script>
 
 <div>
-	<header class="px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-		<h1 class="text-base font-semibold text-gray-900">設定</h1>
+	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">設定</h1>
 	</header>
 
 	<div class="px-4 pt-2">
 		{#if session}
-			<div class="flex items-center gap-3 py-4 border-b border-gray-100">
-				<div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+			<div class="flex items-center gap-3 py-4 border-b border-gray-100 dark:border-gray-800">
+				<div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
 					<img
 						src={myAvatar}
 						alt="アバター"
@@ -133,18 +141,35 @@
 					/>
 				</div>
 				<div>
-					<p class="font-semibold text-sm text-gray-900">@{session.handle}</p>
-					<p class="text-xs text-gray-400">{session.did}</p>
+					<p class="font-semibold text-sm text-gray-900 dark:text-gray-50">@{session.handle}</p>
+					<p class="text-xs text-gray-400 dark:text-gray-500">{session.did}</p>
 				</div>
 			</div>
 		{/if}
 
-		<div class="py-3 border-b border-gray-100">
-			<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">通知設定</p>
+		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">テーマ</p>
+			<div class="flex gap-2">
+				{#each themeOptions as option}
+					<button
+						onclick={() => setTheme(option)}
+						class="flex-1 py-2 rounded-xl text-sm font-medium border transition-colors
+							{getTheme() === option
+								? 'bg-[#0085ff] text-white border-[#0085ff]'
+								: 'bg-transparent text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'}"
+					>
+						{themeLabels[option]}
+					</button>
+				{/each}
+			</div>
+		</div>
+
+		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">通知設定</p>
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-800">Push通知</p>
-					<p class="text-xs text-gray-400 mt-0.5">新着通知をプッシュ通知で受け取る</p>
+					<p class="text-sm font-medium text-gray-800 dark:text-gray-200">Push通知</p>
+					<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">新着通知をプッシュ通知で受け取る</p>
 				</div>
 				{#if pushLoading}
 					<LoadingSpinner size={24} />
@@ -152,7 +177,7 @@
 					<button
 						onclick={togglePush}
 						class="relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none
-							{pushEnabled ? 'bg-[#0085ff]' : 'bg-gray-200'}"
+							{pushEnabled ? 'bg-[#0085ff]' : 'bg-gray-200 dark:bg-gray-700'}"
 						role="switch"
 						aria-checked={pushEnabled}
 						aria-label="Push通知"
@@ -166,8 +191,8 @@
 			</div>
 		</div>
 
-		<div class="py-3 border-b border-gray-100">
-			<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">アカウント</p>
+		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">アカウント</p>
 			<button
 				onclick={handleLogout}
 				disabled={logoutLoading}
@@ -181,11 +206,11 @@
 		</div>
 
 		<div class="py-3">
-			<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">SkyPutterについて</p>
-			<div class="space-y-2 text-sm text-gray-600">
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">SkyPutterについて</p>
+			<div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
 				<p>しずか、でもとどく</p>
-				<p class="text-xs text-gray-400">Version 0.1.0 · suibari</p>
-				<p class="text-xs text-gray-400">Blueskyへのアウトプット専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するためのアプリ。</p>
+				<p class="text-xs text-gray-400 dark:text-gray-500">Version 0.1.0 · suibari</p>
+				<p class="text-xs text-gray-400 dark:text-gray-500">Blueskyへのアウトプット専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するためのアプリ。</p>
 			</div>
 		</div>
 

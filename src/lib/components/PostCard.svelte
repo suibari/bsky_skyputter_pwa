@@ -48,8 +48,8 @@
 	}
 </script>
 
-<article class="px-4 py-3 border-b border-gray-100 flex gap-3">
-	<div class="w-10 h-10 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+<article class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-3">
+	<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0 overflow-hidden">
 		{#if author.avatar}
 			<img src={author.avatar} alt={author.handle} class="w-full h-full object-cover" />
 		{/if}
@@ -58,15 +58,15 @@
 	<div class="flex-1 min-w-0">
 		<div class="flex items-center justify-between gap-2">
 			<div class="min-w-0">
-				<span class="font-semibold text-sm text-gray-900 truncate block">
+				<span class="font-semibold text-sm text-gray-900 dark:text-gray-50 truncate block">
 					{author.displayName || author.handle}
 				</span>
-				<span class="text-xs text-gray-400">@{author.handle} · {timeAgo}</span>
+				<span class="text-xs text-gray-400 dark:text-gray-500">@{author.handle} · {timeAgo}</span>
 			</div>
 		</div>
 
 		{#if record.text}
-			<p class="text-sm text-gray-800 mt-1 leading-relaxed whitespace-pre-wrap wrap-break-word">
+			<p class="text-sm text-gray-800 dark:text-gray-200 mt-1 leading-relaxed whitespace-pre-wrap wrap-break-word">
 				{record.text}
 			</p>
 		{/if}

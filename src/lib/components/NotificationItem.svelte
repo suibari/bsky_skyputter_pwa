@@ -64,9 +64,9 @@
 	}
 </script>
 
-<div class="px-4 py-3 border-b border-gray-100 flex gap-3 items-start">
+<div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-3 items-start">
 	<div class="relative shrink-0">
-		<div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+		<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
 			{#if notification.author.avatar}
 				<img
 					src={notification.author.avatar}
@@ -76,7 +76,7 @@
 			{/if}
 		</div>
 		<div
-			class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center"
+			class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center"
 			style="background-color: {iconInfo.color}"
 		>
 			{#if iconInfo.icon === 'heart'}
@@ -105,7 +105,7 @@
 
 	<div class="flex-1 min-w-0">
 		<div class="flex items-start justify-between gap-2">
-			<p class="text-sm text-gray-800">
+			<p class="text-sm text-gray-800 dark:text-gray-200">
 				<span class="font-semibold">
 					{notification.author.displayName || notification.author.handle}
 				</span>
@@ -115,7 +115,7 @@
 				{#if !notification.isRead}
 					<span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
 				{/if}
-				<span class="text-xs text-gray-400">{formatTime(notification.indexedAt)}</span>
+				<span class="text-xs text-gray-400 dark:text-gray-500">{formatTime(notification.indexedAt)}</span>
 			</div>
 		</div>
 
@@ -126,18 +126,18 @@
 				aria-label={expanded ? '折りたたむ' : '展開する'}
 			>
 				{#if threadTexts.length === 1}
-					<p class="text-xs text-gray-500 {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
+					<p class="text-xs text-gray-500 dark:text-gray-400 {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
 				{:else}
 					<div class="space-y-0.5">
 						{#each threadTexts as text, i}
-							<p class="text-xs text-gray-500 {expanded ? '' : 'line-clamp-2'}">{text}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-400 {expanded ? '' : 'line-clamp-2'}">{text}</p>
 							{#if i < threadTexts.length - 1}
-								<div class="w-px h-2 bg-gray-300 ml-1"></div>
+								<div class="w-px h-2 bg-gray-300 dark:bg-gray-600 ml-1"></div>
 							{/if}
 						{/each}
 					</div>
 				{/if}
-				<span class="text-xs text-gray-400">{expanded ? '▲' : '▼'}</span>
+				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
 			</button>
 		{:else if displayText}
 			<button
@@ -145,8 +145,8 @@
 				onclick={() => (expanded = !expanded)}
 				aria-label={expanded ? '折りたたむ' : '展開する'}
 			>
-				<p class="text-xs text-gray-500 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
-				<span class="text-xs text-gray-400">{expanded ? '▲' : '▼'}</span>
+				<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
+				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
 			</button>
 		{/if}
 

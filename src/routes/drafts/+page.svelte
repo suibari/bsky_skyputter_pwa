@@ -42,17 +42,17 @@
 </script>
 
 <div>
-	<header class="px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-		<h1 class="text-base font-semibold text-gray-900">下書き</h1>
+	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">下書き</h1>
 	</header>
 
 	{#if drafts.length === 0}
-		<p class="text-center text-sm text-gray-400 py-12">下書きがありません</p>
+		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">下書きがありません</p>
 	{:else}
 		{#each drafts as draft (draft.id)}
-			<div class="px-4 py-3 border-b border-gray-100 flex gap-3">
+			<div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-3">
 				{#if draft.images.length > 0}
-					<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+					<div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
 						<img
 							src={URL.createObjectURL(draft.images[0])}
 							alt="下書きサムネイル"
@@ -65,13 +65,13 @@
 					class="flex-1 text-left min-w-0"
 					onclick={() => loadDraft(draft.id)}
 				>
-					<p class="text-sm text-gray-800 leading-relaxed line-clamp-2">
+					<p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed line-clamp-2">
 						{draft.text || '（テキストなし）'}
 					</p>
 					<div class="flex items-center gap-2 mt-1">
-						<span class="text-xs text-gray-400">{formatDate(draft.updatedAt)}</span>
+						<span class="text-xs text-gray-400 dark:text-gray-500">{formatDate(draft.updatedAt)}</span>
 						{#if draft.images.length > 0}
-							<span class="text-xs text-gray-400">📷 {draft.images.length}枚</span>
+							<span class="text-xs text-gray-400 dark:text-gray-500">📷 {draft.images.length}枚</span>
 						{/if}
 					</div>
 				</button>

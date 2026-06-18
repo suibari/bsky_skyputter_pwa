@@ -221,8 +221,8 @@
 </script>
 
 <div>
-	<header class="px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-		<h1 class="text-base font-semibold text-gray-900">Notification</h1>
+	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">Notification</h1>
 	</header>
 
 	{#if !initialLoaded}
@@ -230,7 +230,7 @@
 			<LoadingSpinner />
 		</div>
 	{:else if notifications.length === 0}
-		<p class="text-center text-sm text-gray-400 py-12">通知はありません</p>
+		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">通知はありません</p>
 	{:else}
 		{#each notifications as notification (notification.uri)}
 			<NotificationItem

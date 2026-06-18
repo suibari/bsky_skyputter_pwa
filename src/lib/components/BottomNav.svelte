@@ -35,7 +35,7 @@
 </script>
 
 <nav
-	class="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 flex items-center px-1 z-40"
+	class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center px-1 z-40"
 >
 	{#each tabs as tab}
 		<a

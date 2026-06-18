@@ -207,13 +207,13 @@
 </script>
 
 <div class="flex flex-col h-[calc(100dvh-4rem)]">
-	<header class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+	<header class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
 		<img src="/skyputter_logo.png" alt="SkyPutter" class="h-7 object-contain" />
 		<div class="flex items-center gap-2">
 			<button
 				onclick={handleSaveDraft}
 				disabled={savingDraft || charCount === 0}
-				class="px-3 py-1.5 rounded-xl border border-gray-200 text-sm text-gray-600 font-medium
+				class="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 font-medium
 					disabled:opacity-40 disabled:cursor-not-allowed"
 			>
 				{#if savingDraft}
@@ -238,11 +238,11 @@
 
 	<div class="flex-1 flex flex-col px-4 pt-3 gap-3 min-h-0">
 		{#if draftId}
-			<p class="text-xs text-[#0085ff] bg-blue-50 px-3 py-1.5 rounded-lg shrink-0">下書きを編集中</p>
+			<p class="text-xs text-[#0085ff] bg-blue-50 dark:bg-blue-950 px-3 py-1.5 rounded-lg shrink-0">下書きを編集中</p>
 		{/if}
 
 		<div class="flex gap-3 flex-1 min-h-0">
-			<div class="w-10 h-10 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+			<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0 overflow-hidden">
 				{#if getSession()?.handle}
 					<img
 						src={myAvatar}
@@ -255,7 +255,8 @@
 			<textarea
 				bind:value={text}
 				placeholder={replyContext ? '返信する...' : quoteContext ? '引用コメントを入力...' : 'いまなにしてる？'}
-				class="flex-1 resize-none text-base text-gray-900 placeholder-gray-400 focus:outline-none leading-relaxed min-h-0"
+				class="flex-1 resize-none text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed min-h-0 bg-transparent"
+			onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter' && canPost) handlePost(); }}
 			></textarea>
 		</div>
 
@@ -280,7 +281,7 @@
 	</div>
 
 	{#if replyContext}
-		<div class="mx-4 mb-1 border-l-2 border-blue-200 pl-3 py-1 bg-blue-50 rounded-r-lg relative shrink-0">
+		<div class="mx-4 mb-1 border-l-2 border-blue-200 dark:border-blue-800 pl-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-r-lg relative shrink-0">
 			<button
 				onclick={() => (replyContext = null)}
 				class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
@@ -288,13 +289,13 @@
 			>✕</button>
 			<p class="text-xs text-blue-500 font-medium mb-0.5">↩ 返信先 @{replyContext.authorHandle}</p>
 			{#if replyContext.text}
-				<p class="text-xs text-gray-600 line-clamp-2 pr-4">{replyContext.text}</p>
+				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 pr-4">{replyContext.text}</p>
 			{/if}
 		</div>
 	{/if}
 
 	{#if quoteContext}
-		<div class="mx-4 mb-1 border border-amber-200 pl-3 pr-8 py-2 bg-amber-50 rounded-lg relative shrink-0">
+		<div class="mx-4 mb-1 border border-amber-200 dark:border-amber-800 pl-3 pr-8 py-2 bg-amber-50 dark:bg-amber-950 rounded-lg relative shrink-0">
 			<button
 				onclick={() => (quoteContext = null)}
 				class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
@@ -302,12 +303,12 @@
 			>✕</button>
 			<p class="text-xs text-amber-600 font-medium mb-0.5">❝ 引用 @{quoteContext.authorHandle}</p>
 			{#if quoteContext.text}
-				<p class="text-xs text-gray-600 line-clamp-2">{quoteContext.text}</p>
+				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{quoteContext.text}</p>
 			{/if}
 		</div>
 	{/if}
 
-	<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 shrink-0">
+	<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800 shrink-0">
 		<div class="flex items-center gap-3">
 			<button
 				onclick={() => mediaFileInput.click()}
