@@ -53,7 +53,7 @@
 	<div class="flex-1 flex flex-col justify-center">
 		<div class="mb-6">
 			<img src="/skyputter_logo.png" alt="SkyPutter" class="h-12 object-contain mb-2" />
-			<p class="text-gray-500 text-sm">Bluesky へのアウトプット専用アプリ</p>
+			<p class="text-gray-500 text-sm">アウトプッターのための半投稿専用＋通知Blueskyクライアント</p>
 		</div>
 
 		<p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
