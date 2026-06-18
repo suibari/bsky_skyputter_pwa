@@ -210,7 +210,7 @@
 			<div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
 				<p>しずか、でもとどく</p>
 				<p class="text-xs text-gray-400 dark:text-gray-500">Version 0.1.0 · suibari</p>
-				<p class="text-xs text-gray-400 dark:text-gray-500">Blueskyへのアウトプット専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するためのアプリ。</p>
+				<p class="text-xs text-gray-400 dark:text-gray-500">Blueskyへの半投稿専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するクリエイターのためのアプリ。</p>
 			</div>
 		</div>
 
