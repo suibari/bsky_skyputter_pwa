@@ -4,7 +4,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body ?? '',
     icon: '/skyputter_icon.png',
-    badge: '/skyputter_icon.png',
+    badge: '/skyputter_icon_badge.png',
     data: { url: data.url ?? '/notifications' }
   };
   event.waitUntil(self.registration.showNotification(title, options));
