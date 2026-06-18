@@ -3,14 +3,17 @@
 	import { goto } from '$app/navigation';
 	import type { Draft } from '$lib/types/draft';
 	import Modal from '$lib/components/Modal.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getDrafts, deleteDraft } from '$lib/db/drafts';
 
 	let drafts = $state<Draft[]>([]);
 	let deleteTarget = $state<string | null>(null);
+	let loading = $state(true);
 
 	onMount(async () => {
 		drafts = await getDrafts();
+		loading = false;
 	});
 
 	function formatDate(iso: string): string {
@@ -46,7 +49,11 @@
 		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">下書き</h1>
 	</header>
 
-	{#if drafts.length === 0}
+	{#if loading}
+		<div class="flex justify-center py-12">
+			<LoadingSpinner />
+		</div>
+	{:else if drafts.length === 0}
 		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">下書きがありません</p>
 	{:else}
 		{#each drafts as draft (draft.id)}

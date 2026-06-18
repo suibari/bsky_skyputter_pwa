@@ -14,6 +14,7 @@
 	let posts = $state<AppBskyFeedDefs.FeedViewPost[]>([]);
 	let cursor = $state<string | undefined>(undefined);
 	let loading = $state(false);
+	let initialLoaded = $state(false);
 	let hasMore = $state(true);
 	let deleteTarget = $state<string | null>(null);
 	let profile = $state<AppBskyActorDefs.ProfileViewDetailed | null>(null);
@@ -48,6 +49,7 @@
 			showToast(e instanceof Error ? e.message : '読み込みに失敗しました', 'error');
 		} finally {
 			loading = false;
+			initialLoaded = true;
 		}
 	}
 
@@ -119,11 +121,11 @@
 		{/if}
 	</div>
 
-	{#if posts.length === 0 && loading}
+	{#if !initialLoaded}
 		<div class="flex justify-center py-12">
 			<LoadingSpinner />
 		</div>
-	{:else if posts.length === 0 && !loading}
+	{:else if posts.length === 0}
 		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">まだ投稿がありません</p>
 	{:else}
 		{#each posts as feedViewPost (feedViewPost.post.uri)}
