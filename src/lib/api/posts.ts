@@ -22,6 +22,7 @@ export type PostImageEmbed = {
 export type PostVideoEmbed = {
 	blob: BlobRef;
 	alt: string;
+	aspectRatio?: { width: number; height: number };
 };
 
 export async function createPost(params: {
@@ -54,7 +55,7 @@ export async function createPost(params: {
 			record.embed = {
 				$type: 'app.bsky.embed.recordWithMedia',
 				record: { $type: 'app.bsky.embed.record', record: { uri: params.quoteTo.uri, cid: params.quoteTo.cid } },
-				media: { $type: 'app.bsky.embed.video', video: params.video.blob, alt: params.video.alt }
+				media: { $type: 'app.bsky.embed.video', video: params.video.blob, alt: params.video.alt, ...(params.video.aspectRatio ? { aspectRatio: params.video.aspectRatio } : {}) }
 			};
 		} else {
 			record.embed = {
@@ -71,7 +72,8 @@ export async function createPost(params: {
 		record.embed = {
 			$type: 'app.bsky.embed.video',
 			video: params.video.blob,
-			alt: params.video.alt
+			alt: params.video.alt,
+			...(params.video.aspectRatio ? { aspectRatio: params.video.aspectRatio } : {})
 		};
 	}
 

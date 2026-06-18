@@ -11,7 +11,7 @@
 	import { showToast } from '$lib/stores/toast.svelte';
 	import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
 	import { createPost } from '$lib/api/posts';
-	import { uploadImage, uploadVideo, getImageDimensions } from '$lib/api/media';
+	import { uploadImage, uploadVideo, getImageDimensions, getVideoDimensions } from '$lib/api/media';
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
 
 	let text = $state('');
@@ -20,6 +20,7 @@
 	let posting = $state(false);
 	let savingDraft = $state(false);
 	let videoUploading = $state(false);
+	let videoProgress = $state<number | null>(null);
 	let draftId = $state<string | null>(null);
 	let draftCreatedAt = $state<string | null>(null);
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
@@ -32,7 +33,11 @@
 	let quoteContext = $state<QuoteContext | null>(null);
 
 	const charCount = $derived(text.length);
-	const canPost = $derived(charCount > 0 && charCount <= 300 && !posting);
+	const canPost = $derived(
+		(charCount > 0 || images.length > 0 || video !== null) &&
+		charCount <= 300 &&
+		!posting
+	);
 	const canAddMedia = $derived(images.length < 4 && video === null);
 
 	onMount(async () => {
@@ -120,9 +125,13 @@
 				uploadedImages = blobs.map((blob, i) => ({ blob, alt: '', aspectRatio: dims[i] }));
 			} else if (video) {
 				videoUploading = true;
-				const blob = await uploadVideo(video);
+				const [blob, dims] = await Promise.all([
+					uploadVideo(video, (p) => { videoProgress = p; }),
+					getVideoDimensions(video)
+				]);
 				videoUploading = false;
-				uploadedVideo = { blob, alt: '' };
+				videoProgress = null;
+				uploadedVideo = { blob, alt: '', aspectRatio: dims };
 			}
 
 			await createPost({
@@ -146,6 +155,7 @@
 			showToast('投稿しました', 'success');
 		} catch (e) {
 			videoUploading = false;
+			videoProgress = null;
 			showToast(e instanceof Error ? e.message : '投稿に失敗しました', 'error');
 		} finally {
 			posting = false;
@@ -271,7 +281,7 @@
 				{#if videoUploading}
 					<div class="flex items-center gap-2 text-sm text-gray-500">
 						<LoadingSpinner size={16} />
-						<span>動画を処理中...</span>
+						<span>動画を処理中{videoProgress !== null ? `... ${videoProgress}%` : '...'}</span>
 					</div>
 				{:else}
 					<VideoPicker bind:video />
