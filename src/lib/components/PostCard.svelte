@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { AppBskyFeedDefs } from '@atproto/api';
 	import ImageViewer from './ImageViewer.svelte';
+	import VideoViewer from './VideoViewer.svelte';
 
 	let {
 		feedViewPost,
@@ -33,13 +34,21 @@
 	const timeAgo = $derived(calcTimeAgo(record.createdAt));
 
 	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
+	type EmbedVideo = { playlist: string; thumbnail?: string; aspectRatio?: { width: number; height: number } };
+	type ExternalView = { uri: string; title: string; description: string; thumb?: string };
 
 	function getImages(post: AppBskyFeedDefs.PostView): EmbedImage[] {
 		const embed = post.embed as { images?: EmbedImage[] } | undefined;
 		return embed?.images ?? [];
 	}
 
-	type ExternalView = { uri: string; title: string; description: string; thumb?: string };
+	function getVideo(post: AppBskyFeedDefs.PostView): EmbedVideo | null {
+		const embed = post.embed as { $type?: string; playlist?: string; thumbnail?: string; aspectRatio?: { width: number; height: number } } | undefined;
+		if (embed?.$type === 'app.bsky.embed.video#view' && embed.playlist) {
+			return { playlist: embed.playlist, thumbnail: embed.thumbnail, aspectRatio: embed.aspectRatio };
+		}
+		return null;
+	}
 
 	function getExternal(post: AppBskyFeedDefs.PostView): ExternalView | null {
 		const embed = post.embed as { $type?: string; external?: ExternalView } | undefined;
@@ -53,6 +62,7 @@
 
 	let viewerOpen = $state(false);
 	let viewerIndex = $state(0);
+	let videoViewerOpen = $state(false);
 
 	function openViewer(index: number) {
 		viewerIndex = index;
@@ -103,6 +113,27 @@
 					</button>
 				{/each}
 			</div>
+		{/if}
+
+		{#if getVideo(post)}
+			{@const vid = getVideo(post)!}
+			<button
+				class="relative mt-2 w-full rounded-xl overflow-hidden bg-black focus:outline-none"
+				style={vid.aspectRatio ? `aspect-ratio: ${vid.aspectRatio.width} / ${vid.aspectRatio.height}` : 'aspect-ratio: 16 / 9'}
+				onclick={() => (videoViewerOpen = true)}
+				aria-label="動画を再生"
+			>
+				{#if vid.thumbnail}
+					<img src={vid.thumbnail} alt="動画サムネイル" class="w-full h-full object-cover" />
+				{/if}
+				<div class="absolute inset-0 flex items-center justify-center">
+					<div class="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+						<svg class="w-6 h-6 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+							<path d="M8 5v14l11-7z" />
+						</svg>
+					</div>
+				</div>
+			</button>
 		{/if}
 
 		{#if getExternal(post)}
@@ -186,5 +217,14 @@
 		images={getImages(post).map((img) => img.fullsize ?? img.thumb)}
 		startIndex={viewerIndex}
 		onClose={() => (viewerOpen = false)}
+	/>
+{/if}
+
+{#if videoViewerOpen}
+	{@const vid = getVideo(post)!}
+	<VideoViewer
+		src={vid.playlist}
+		thumbnail={vid.thumbnail}
+		onClose={() => (videoViewerOpen = false)}
 	/>
 {/if}
