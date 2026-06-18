@@ -1,7 +1,7 @@
 {
   "name": "SkyPutter",
   "short_name": "SkyPutter",
-  "description": "Bluesky投稿専用アプリ",
+  "description": "アウトプッターのためのBlueskyクライアント",
   "start_url": "/post",
   "display": "standalone",
   "background_color": "#ffffff",
