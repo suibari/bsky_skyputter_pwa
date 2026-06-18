@@ -10,9 +10,11 @@
 	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
-	import { createPost } from '$lib/api/posts';
+	import { createPost, type PostExternalEmbed } from '$lib/api/posts';
 	import { uploadImage, uploadVideo, getImageDimensions, getVideoDimensions } from '$lib/api/media';
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
+	import { fetchOgp, type OgpData } from '$lib/api/ogp';
+	import LinkCardPreview from '$lib/components/LinkCardPreview.svelte';
 
 	let text = $state('');
 	let images = $state<File[]>([]);
@@ -31,6 +33,41 @@
 
 	let replyContext = $state<ReplyContext | null>(null);
 	let quoteContext = $state<QuoteContext | null>(null);
+
+	let ogpData = $state<OgpData | null>(null);
+	let ogpLoading = $state(false);
+	let ogpDismissed = $state(false);
+	let ogpCurrentUrl: string | null = null; // $state にすると effect の依存に入りタイマーがキャンセルされるため通常変数
+	let ogpDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	const URL_REGEX = /https?:\/\/[^\s]+/g;
+
+	$effect(() => {
+		const urls = text.match(URL_REGEX);
+		const firstUrl = urls?.[0] ?? null;
+
+		if (ogpDebounceTimer) clearTimeout(ogpDebounceTimer);
+
+		// URLがなくなってもカードは維持する（×ボタンでのみ消去）
+		if (!firstUrl) return;
+
+		if (firstUrl === ogpCurrentUrl) return;
+
+		// New URL detected — reset dismissed flag and start debounce
+		ogpDismissed = false;
+		ogpData = null;
+		ogpCurrentUrl = firstUrl;
+		ogpLoading = true;
+
+		ogpDebounceTimer = setTimeout(async () => {
+			const result = await fetchOgp(firstUrl);
+			// Only apply if the URL hasn't changed while waiting
+			if (ogpCurrentUrl === firstUrl) {
+				ogpData = result;
+				ogpLoading = false;
+			}
+		}, 800);
+	});
 
 	const charCount = $derived(text.length);
 	const canPost = $derived(
@@ -134,10 +171,27 @@
 				uploadedVideo = { blob, alt: '', aspectRatio: dims };
 			}
 
+			let external: PostExternalEmbed | undefined;
+			if (ogpData && !ogpDismissed && uploadedImages.length === 0 && !uploadedVideo) {
+				external = { uri: ogpData.uri, title: ogpData.title, description: ogpData.description };
+				if (ogpData.thumb) {
+					try {
+						const agent = await createAgent();
+						const thumbRes = await fetch(ogpData.thumb);
+						const thumbBlob = await thumbRes.blob();
+						const uploaded = await agent.uploadBlob(thumbBlob, { encoding: thumbBlob.type });
+						external.thumbBlob = uploaded.data.blob;
+					} catch {
+						// サムネイルアップロード失敗は無視して続行
+					}
+				}
+			}
+
 			await createPost({
 				text,
 				images: uploadedImages.length > 0 ? uploadedImages : undefined,
 				video: uploadedVideo,
+				external,
 				replyTo: replyContext ?? undefined,
 				quoteTo: quoteContext ? { uri: quoteContext.uri, cid: quoteContext.cid } : undefined
 			});
@@ -152,6 +206,10 @@
 			video = null;
 			replyContext = null;
 			quoteContext = null;
+			ogpData = null;
+			ogpLoading = false;
+			ogpDismissed = false;
+			ogpCurrentUrl = null;
 			showToast('投稿しました', 'success');
 		} catch (e) {
 			videoUploading = false;
@@ -316,6 +374,14 @@
 				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{quoteContext.text}</p>
 			{/if}
 		</div>
+	{/if}
+
+	{#if (ogpLoading || ogpData) && !ogpDismissed && images.length === 0 && !video}
+		<LinkCardPreview
+			ogp={ogpData}
+			loading={ogpLoading}
+			onDismiss={() => { ogpDismissed = true; }}
+		/>
 	{/if}
 
 	<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800 shrink-0">

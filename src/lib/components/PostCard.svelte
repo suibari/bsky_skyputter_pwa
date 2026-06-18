@@ -39,6 +39,18 @@
 		return embed?.images ?? [];
 	}
 
+	type ExternalView = { uri: string; title: string; description: string; thumb?: string };
+
+	function getExternal(post: AppBskyFeedDefs.PostView): ExternalView | null {
+		const embed = post.embed as { $type?: string; external?: ExternalView } | undefined;
+		if (embed?.$type === 'app.bsky.embed.external#view') return embed.external ?? null;
+		return null;
+	}
+
+	function hostname(uri: string): string {
+		try { return new URL(uri).hostname; } catch { return uri; }
+	}
+
 	let viewerOpen = $state(false);
 	let viewerIndex = $state(0);
 
@@ -91,6 +103,27 @@
 					</button>
 				{/each}
 			</div>
+		{/if}
+
+		{#if getExternal(post)}
+			{@const ext = getExternal(post)!}
+			<a
+				href={ext.uri}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="block mt-2 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+			>
+				{#if ext.thumb}
+					<img src={ext.thumb} alt={ext.title} class="w-full max-h-40 object-cover" />
+				{/if}
+				<div class="px-3 py-2">
+					<p class="text-xs text-gray-400 truncate">{hostname(ext.uri)}</p>
+					<p class="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{ext.title}</p>
+					{#if ext.description}
+						<p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{ext.description}</p>
+					{/if}
+				</div>
+			</a>
 		{/if}
 
 		<div class="flex items-center gap-4 mt-2">
