@@ -209,7 +209,11 @@
 			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">SkyPutterについて</p>
 			<div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
 				<p>しずか、でもとどく</p>
-				<p class="text-xs text-gray-400 dark:text-gray-500">Version 0.1.0 · suibari</p>
+				<div class="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+					<a href="https://bsky.app/profile/suibari.com" target="_blank" rel="noopener noreferrer" class="hover:underline">suibari</a>
+					<span>/</span>
+					<a href="https://github.com/suibari/bsky_skyputter_pwa" target="_blank" rel="noopener noreferrer" class="hover:underline">GitHub</a>
+				</div>
 				<p class="text-xs text-gray-400 dark:text-gray-500">Blueskyへの半投稿専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するクリエイターのためのアプリ。</p>
 			</div>
 		</div>
