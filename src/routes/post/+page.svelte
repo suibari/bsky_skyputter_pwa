@@ -75,7 +75,7 @@
 		charCount <= 300 &&
 		!posting
 	);
-	const canAddMedia = $derived(images.length < 4 && video === null);
+	const canAddMedia = $derived(images.length < 10 && video === null);
 
 	onMount(async () => {
 		const session = getSession();
@@ -251,7 +251,7 @@
 					hasConflict = true;
 					break;
 				}
-				if (images.length < 4) {
+				if (images.length < 10) {
 					images = [...images, file];
 				}
 			} else if (file.type.startsWith('video/')) {
