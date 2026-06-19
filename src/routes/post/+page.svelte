@@ -40,6 +40,27 @@
 	let ogpCurrentUrl: string | null = null; // $state にすると effect の依存に入りタイマーがキャンセルされるため通常変数
 	let ogpDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+	let highlightDiv = $state<HTMLDivElement | undefined>(undefined);
+	let textareaEl = $state<HTMLTextAreaElement | undefined>(undefined);
+
+	function syncScroll() {
+		if (highlightDiv && textareaEl) {
+			highlightDiv.scrollTop = textareaEl.scrollTop;
+		}
+	}
+
+	const FACET_REGEX = /(https?:\/\/[^\s]+|#[\p{L}\p{N}_]+|@[a-zA-Z0-9._-]+)/gu;
+
+	function computeHighlight(t: string): string {
+		const parts = t.split(FACET_REGEX);
+		return parts.map((part, i) => {
+			const esc = part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			return i % 2 === 1 ? `<span class="text-[#0085ff]">${esc}</span>` : esc;
+		}).join('');
+	}
+
+	const highlightedText = $derived(computeHighlight(text) + (text.endsWith('\n') ? ' ' : ''));
+
 	const URL_REGEX = /https?:\/\/[^\s]+/g;
 
 	$effect(() => {
@@ -320,12 +341,21 @@
 					/>
 				{/if}
 			</div>
-			<textarea
-				bind:value={text}
-				placeholder={replyContext ? '返信する...' : quoteContext ? '引用コメントを入力...' : 'いまなにしてる？'}
-				class="flex-1 resize-none text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed min-h-0 bg-transparent"
-			onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter' && canPost) handlePost(); }}
-			></textarea>
+			<div class="flex-1 min-h-0 relative">
+				<div
+					bind:this={highlightDiv}
+					class="absolute inset-0 text-base leading-relaxed whitespace-pre-wrap wrap-break-word overflow-hidden pointer-events-none text-gray-900 dark:text-gray-100"
+					aria-hidden="true"
+				>{@html highlightedText}</div>
+				<textarea
+					bind:value={text}
+					bind:this={textareaEl}
+					onscroll={syncScroll}
+					placeholder={replyContext ? '返信する...' : quoteContext ? '引用コメントを入力...' : 'いまなにしてる？'}
+					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent"
+					onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter' && canPost) handlePost(); }}
+				></textarea>
+			</div>
 		</div>
 
 		{#if images.length > 0}

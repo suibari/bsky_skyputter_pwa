@@ -1,5 +1,6 @@
 import { createAgent } from './agent';
 import { getSession } from '$lib/stores/auth.svelte';
+import { RichText } from '@atproto/api';
 import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
 
 export async function getAuthorFeed(did: string, cursor?: string) {
@@ -45,9 +46,13 @@ export async function createPost(params: {
 
 	const agent = await createAgent();
 
+	const rt = new RichText({ text: params.text });
+	await rt.detectFacets(agent);
+
 	const record: AppBskyFeedPost.Record = {
 		$type: 'app.bsky.feed.post',
-		text: params.text,
+		text: rt.text,
+		facets: rt.facets,
 		createdAt: new Date().toISOString(),
 		langs: ['ja']
 	};
