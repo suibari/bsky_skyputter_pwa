@@ -43,7 +43,7 @@
 		repost: 'リポストしました',
 		follow: 'フォローしました',
 		mention: 'にメンションしました',
-		reply: 'に返信しました',
+		reply: '返信しました',
 		quote: 'を引用しました',
 		'subscribed-post': '投稿しました'
 	};
@@ -293,6 +293,24 @@
 				</div>
 				{#if quoted.text}
 					<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">{quoted.text}</p>
+				{/if}
+			</div>
+		{/if}
+
+		{#if notification.reason === 'reply' && subjectPost}
+			{@const subjectRec = subjectPost.record as { text?: string } | undefined}
+			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+				<div class="flex items-center gap-1.5 mb-1">
+					{#if subjectPost.author.avatar}
+						<img src={subjectPost.author.avatar} alt={subjectPost.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+					{/if}
+					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
+						{subjectPost.author.displayName || subjectPost.author.handle}
+					</span>
+					<span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">@{subjectPost.author.handle}</span>
+				</div>
+				{#if subjectRec?.text}
+					<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">{subjectRec.text}</p>
 				{/if}
 			</div>
 		{/if}

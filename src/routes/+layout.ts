@@ -45,7 +45,7 @@ export async function load({ url }: { url: URL }) {
 		loadSession();
 	}
 
-	const isPublicPath = url.pathname === '/login' || url.pathname === '/oauth/callback';
+	const isPublicPath = url.pathname === '/login' || url.pathname === '/oauth/callback' || url.pathname === '/privacy-policy';
 
 	if (!isAuthenticated() && !isPublicPath) {
 		redirect(302, '/login');

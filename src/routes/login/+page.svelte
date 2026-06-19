@@ -157,5 +157,8 @@
 		</div>
 	</div>
 
-	<p class="text-center text-xs text-gray-400 mt-8">しずか、でもとどく</p>
+	<p class="text-center text-xs text-gray-400 mt-4">
+		<a href="/privacy-policy" class="underline hover:text-gray-600 dark:hover:text-gray-300">プライバシーポリシー</a>
+	</p>
+	<p class="text-center text-xs text-gray-400 mt-2">しずか、でもとどく</p>
 </div>

@@ -58,7 +58,7 @@
 	async function fetchSubjectPosts(newNotifications: Notification[]) {
 		// like/repost/quote の subject ポスト（自分の投稿）を取得
 		const subjectUris = newNotifications
-			.filter((n) => ['like', 'repost', 'quote'].includes(n.reason) && n.reasonSubject)
+			.filter((n) => ['like', 'repost', 'quote', 'reply'].includes(n.reason) && n.reasonSubject)
 			.map((n) => n.reasonSubject as string);
 		// reply/mention/quote/subscribed-post の通知投稿本体を取得
 		const notifUris = newNotifications
