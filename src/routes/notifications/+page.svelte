@@ -5,9 +5,7 @@
 	import NotificationItem from '$lib/components/NotificationItem.svelte';
 	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { getSession } from '$lib/stores/auth.svelte';
-	import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notifications.svelte';
+import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { listNotifications, markSeen } from '$lib/api/notifications';
@@ -200,7 +198,6 @@
 		const count = getNotificationsTapCount();
 		if (count === 0) return;
 		untrack(() => {
-			window.scrollTo({ top: 0, behavior: 'smooth' });
 			notifications = [];
 			cursor = undefined;
 			hasMore = true;
@@ -212,22 +209,11 @@
 	});
 
 	onMount(async () => {
-		const session = getSession();
-
-		// Mark seen on Bluesky
 		try {
 			await markSeen();
 			setUnreadCount(0);
 		} catch {
 			// ignore
-		}
-
-		// Mark seen on Express server
-		if (session) {
-			fetch(`${PUBLIC_API_URL}/api/notifications/seen`, {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${session.accessJwt}` }
-			}).catch(() => {});
 		}
 
 		await loadMore();
