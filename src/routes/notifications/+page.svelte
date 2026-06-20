@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
 	import NotificationItem from '$lib/components/NotificationItem.svelte';
@@ -199,14 +199,16 @@
 	$effect(() => {
 		const count = getNotificationsTapCount();
 		if (count === 0) return;
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-		notifications = [];
-		cursor = undefined;
-		hasMore = true;
-		initialLoaded = false;
-		markSeen().catch(() => {});
-		setUnreadCount(0);
-		loadMore().then(() => { initialLoaded = true; });
+		untrack(() => {
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+			notifications = [];
+			cursor = undefined;
+			hasMore = true;
+			initialLoaded = false;
+			markSeen().catch(() => {});
+			setUnreadCount(0);
+			loadMore().then(() => { initialLoaded = true; });
+		});
 	});
 
 	onMount(async () => {
