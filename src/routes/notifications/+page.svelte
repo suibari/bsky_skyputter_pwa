@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
 	import NotificationItem from '$lib/components/NotificationItem.svelte';
 	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { getSession } from '$lib/stores/auth.svelte';
-	import { setUnreadCount } from '$lib/stores/notifications.svelte';
+import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { listNotifications, markSeen } from '$lib/api/notifications';
@@ -196,23 +194,27 @@
 		goto(`/post?quoteTo=${encodeURIComponent(uri)}&quoteCid=${encodeURIComponent(cid)}`);
 	}
 
-	onMount(async () => {
-		const session = getSession();
+	$effect(() => {
+		const count = getNotificationsTapCount();
+		if (count === 0) return;
+		untrack(() => {
+			if (loading) return;
+			notifications = [];
+			cursor = undefined;
+			hasMore = true;
+			initialLoaded = false;
+			markSeen().catch(() => {});
+			setUnreadCount(0);
+			loadMore().then(() => { initialLoaded = true; });
+		});
+	});
 
-		// Mark seen on Bluesky
+	onMount(async () => {
 		try {
 			await markSeen();
 			setUnreadCount(0);
 		} catch {
 			// ignore
-		}
-
-		// Mark seen on Express server
-		if (session) {
-			fetch(`${PUBLIC_API_URL}/api/notifications/seen`, {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${session.accessJwt}` }
-			}).catch(() => {});
 		}
 
 		await loadMore();

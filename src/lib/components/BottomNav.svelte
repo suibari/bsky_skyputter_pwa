@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { getUnreadCount } from '$lib/stores/notifications.svelte';
+	import { getUnreadCount, triggerNotificationsTap } from '$lib/stores/notifications.svelte';
 
 	const tabs = [
 		{
@@ -40,6 +40,12 @@
 	{#each tabs as tab}
 		<a
 			href={tab.href}
+			onclick={(e) => {
+				if (tab.href === '/notifications' && isActive('/notifications')) {
+					e.preventDefault();
+					triggerNotificationsTap();
+				}
+			}}
 			class="relative flex-1 flex flex-col items-center gap-0.5 py-1 rounded-xl
 				{isActive(tab.href) ? 'text-[#0085ff]' : 'text-gray-400'}"
 			aria-current={isActive(tab.href) ? 'page' : undefined}

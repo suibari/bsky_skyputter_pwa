@@ -5,8 +5,8 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import { isAuthenticated } from '$lib/stores/auth.svelte';
-	import { setUnreadCount } from '$lib/stores/notifications.svelte';
-	import { getUnreadCount } from '$lib/api/notifications';
+	import { setUnreadCount, triggerNotificationsTap } from '$lib/stores/notifications.svelte';
+	import { getUnreadCount, markSeen } from '$lib/api/notifications';
 	import { loadTheme } from '$lib/stores/theme.svelte';
 
 	let { children } = $props();
@@ -38,8 +38,16 @@
 		};
 		document.addEventListener('visibilitychange', onVisibility);
 
-		const onSwMessage = (event: MessageEvent) => {
-			if (event.data?.type === 'NEW_NOTIFICATION') refreshCount();
+		const onSwMessage = async (event: MessageEvent) => {
+			if (event.data?.type === 'NEW_NOTIFICATION') {
+				if ($page.url.pathname === '/notifications') {
+					try { await markSeen(); } catch {}
+					setUnreadCount(0);
+					triggerNotificationsTap();
+				} else {
+					refreshCount();
+				}
+			}
 		};
 		navigator.serviceWorker.addEventListener('message', onSwMessage);
 
