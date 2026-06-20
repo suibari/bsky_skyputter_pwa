@@ -7,7 +7,16 @@ self.addEventListener('push', (event) => {
     badge: '/skyputter_icon_badge.png',
     data: { url: data.url ?? '/notifications' }
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        for (const client of clientList) {
+          client.postMessage({ type: 'NEW_NOTIFICATION' });
+        }
+      })
+    ])
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {

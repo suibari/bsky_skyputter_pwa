@@ -37,7 +37,16 @@
 			if (document.visibilityState === 'visible') refreshCount();
 		};
 		document.addEventListener('visibilitychange', onVisibility);
-		return () => document.removeEventListener('visibilitychange', onVisibility);
+
+		const onSwMessage = (event: MessageEvent) => {
+			if (event.data?.type === 'NEW_NOTIFICATION') refreshCount();
+		};
+		navigator.serviceWorker.addEventListener('message', onSwMessage);
+
+		return () => {
+			document.removeEventListener('visibilitychange', onVisibility);
+			navigator.serviceWorker.removeEventListener('message', onSwMessage);
+		};
 	});
 </script>
 
