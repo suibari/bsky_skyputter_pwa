@@ -15,8 +15,9 @@
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
 	import { fetchOgp, type OgpData } from '$lib/api/ogp';
 	import LinkCardPreview from '$lib/components/LinkCardPreview.svelte';
+	import { getComposeText, setComposeText, clearComposeText, loadComposeText } from '$lib/stores/compose.svelte';
 
-	let text = $state('');
+	let text = $state(getComposeText());
 	let images = $state<File[]>([]);
 	let video = $state<File | null>(null);
 	let posting = $state(false);
@@ -60,6 +61,10 @@
 	}
 
 	const highlightedText = $derived(computeHighlight(text) + (text.endsWith('\n') ? ' ' : ''));
+
+	$effect(() => {
+		if (!draftId) setComposeText(text);
+	});
 
 	const URL_REGEX = /https?:\/\/[^\s]+/g;
 
@@ -118,6 +123,9 @@
 				draftId = id;
 				draftCreatedAt = draft.createdAt;
 			}
+		} else {
+			loadComposeText();
+			text = getComposeText();
 		}
 
 		const replyTo = $page.url.searchParams.get('replyTo');
@@ -231,6 +239,7 @@
 			ogpLoading = false;
 			ogpDismissed = false;
 			ogpCurrentUrl = null;
+			clearComposeText();
 			showToast('投稿しました', 'success');
 		} catch (e) {
 			videoUploading = false;
@@ -254,6 +263,7 @@
 			});
 			draftId = id;
 			if (!draftCreatedAt) draftCreatedAt = now;
+			clearComposeText();
 			showToast('下書きを保存しました', 'success');
 		} catch {
 			showToast('下書きの保存に失敗しました', 'error');
