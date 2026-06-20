@@ -198,6 +198,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 		const count = getNotificationsTapCount();
 		if (count === 0) return;
 		untrack(() => {
+			if (loading) return;
 			notifications = [];
 			cursor = undefined;
 			hasMore = true;
