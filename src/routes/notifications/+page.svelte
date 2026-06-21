@@ -126,6 +126,20 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 				})
 			);
 
+			// notifUris の viewer.like を AppView で確認（他アプリのイイネを反映）
+			if (notifUris.length > 0) {
+				try {
+					const appViewRes = await agent.api.app.bsky.feed.getPosts({ uris: notifUris });
+					for (const post of appViewRes.data.posts) {
+						if ((post.viewer as { like?: string } | undefined)?.like) {
+							nextLiked.add(post.uri);
+						}
+					}
+				} catch {
+					// AppView に未伝播の場合は無視
+				}
+			}
+
 			// 通知投稿の同一著者連続自己リプライを最大3レベルまで遡って PDS から取得
 			let frontier = notifUris.filter((u) => next.has(u));
 			for (let level = 0; level < 3; level++) {
