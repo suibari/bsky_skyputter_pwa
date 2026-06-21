@@ -238,8 +238,8 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 			.filter(Boolean);
 	}
 
-	async function loadMore() {
-		if (loading || !hasMore) return;
+	async function loadMore(): Promise<boolean> {
+		if (loading || !hasMore) return false;
 		loading = true;
 		try {
 			const data = await listNotifications(cursor);
@@ -252,6 +252,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 		} finally {
 			loading = false;
 		}
+		return true;
 	}
 
 	async function handleLike(uri: string, cid: string) {
@@ -283,7 +284,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 			initialLoaded = false;
 			markSeen().catch(() => {});
 			setUnreadCount(0);
-			loadMore().then(() => { initialLoaded = true; });
+			loadMore().then((ran) => { if (ran) initialLoaded = true; });
 		});
 	});
 
@@ -295,8 +296,8 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 			// ignore
 		}
 
-		await loadMore();
-		initialLoaded = true;
+		const ran = await loadMore();
+		if (ran) initialLoaded = true;
 	});
 </script>
 
