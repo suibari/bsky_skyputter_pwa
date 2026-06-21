@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
-	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
+	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs, AppBskyActorDefs } from '@atproto/api';
 	import NotificationItem from '$lib/components/NotificationItem.svelte';
 	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
@@ -26,6 +26,39 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 
 	function didFromUri(uri: string): string | undefined {
 		return uri.match(/^at:\/\/(did:[^/]+)/)?.[1];
+	}
+
+	function buildPostView(
+		data: { uri: string; cid?: string; value: unknown },
+		author: AppBskyActorDefs.ProfileViewBasic | AppBskyActorDefs.ProfileView
+	): AppBskyFeedDefs.PostView {
+		return {
+			uri: data.uri,
+			cid: data.cid ?? '',
+			author: author as AppBskyActorDefs.ProfileViewBasic,
+			record: data.value as AppBskyFeedDefs.PostView['record'],
+			replyCount: 0,
+			repostCount: 0,
+			likeCount: 0,
+			quoteCount: 0,
+			indexedAt: (data.value as { createdAt?: string }).createdAt ?? new Date().toISOString(),
+			labels: [],
+		};
+	}
+
+	async function getRecordDirect(
+		agent: Awaited<ReturnType<typeof createAgent>>,
+		uri: string
+	): Promise<{ uri: string; cid?: string; value: unknown } | null> {
+		const m = uri.match(/^at:\/\/([^/]+)\/([^/]+)\/(.+)$/);
+		if (!m) return null;
+		const [, repo, collection, rkey] = m;
+		try {
+			const res = await agent.com.atproto.repo.getRecord({ repo, collection, rkey });
+			return { uri: res.data.uri, cid: res.data.cid, value: res.data.value };
+		} catch {
+			return null;
+		}
 	}
 
 	function extractFromThread(
@@ -54,30 +87,46 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 	}
 
 	async function fetchSubjectPosts(newNotifications: Notification[]) {
-		// like/repost/quote の subject ポスト（自分の投稿）を取得
+		// like/repost/quote の subject ポスト（自分の既存投稿）を AppView から取得
 		const subjectUris = newNotifications
 			.filter((n) => ['like', 'repost', 'quote', 'reply'].includes(n.reason) && n.reasonSubject)
-			.map((n) => n.reasonSubject as string);
-		// reply/mention/quote/subscribed-post の通知投稿本体を取得
+			.map((n) => n.reasonSubject as string)
+			.filter((uri) => !subjectPostMap.has(uri));
+
+		// reply/mention/quote/subscribed-post の通知投稿本体を PDS から直接取得（AppView遅延を回避）
 		const notifUris = newNotifications
 			.filter((n) => THREAD_REASONS.includes(n.reason))
-			.map((n) => n.uri);
+			.map((n) => n.uri)
+			.filter((uri) => !subjectPostMap.has(uri));
 
-		const uris = [...new Set([...subjectUris, ...notifUris])].filter((uri) => !subjectPostMap.has(uri));
-		if (uris.length === 0) return;
+		if (subjectUris.length === 0 && notifUris.length === 0) return;
 
 		try {
 			const agent = await createAgent();
 			const next = new Map(subjectPostMap);
 			const nextLiked = new Set(likedUris);
 
-			const res = await agent.api.app.bsky.feed.getPosts({ uris });
-			for (const post of res.data.posts) {
-				next.set(post.uri, post);
-				if ((post.viewer as { like?: string } | undefined)?.like) nextLiked.add(post.uri);
+			// subjectUris は既存投稿なので AppView で取得（いいね数等も取れる）
+			if (subjectUris.length > 0) {
+				const res = await agent.api.app.bsky.feed.getPosts({ uris: subjectUris });
+				for (const post of res.data.posts) {
+					next.set(post.uri, post);
+					if ((post.viewer as { like?: string } | undefined)?.like) nextLiked.add(post.uri);
+				}
 			}
 
-			// 通知投稿の同一著者連続自己リプライを最大3レベルまで遡って取得
+			// notifUris は新規投稿なので PDS getRecord で直接取得（遅延なし）
+			await Promise.all(
+				notifUris.map(async (uri) => {
+					const rec = await getRecordDirect(agent, uri);
+					if (!rec) return;
+					const notif = newNotifications.find((n) => n.uri === uri);
+					if (!notif) return;
+					next.set(uri, buildPostView(rec, notif.author));
+				})
+			);
+
+			// 通知投稿の同一著者連続自己リプライを最大3レベルまで遡って PDS から取得
 			let frontier = notifUris.filter((u) => next.has(u));
 			for (let level = 0; level < 3; level++) {
 				const parentUris: string[] = [];
@@ -91,8 +140,18 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 				}
 				const toFetch = [...new Set(parentUris)];
 				if (toFetch.length === 0) break;
-				const parentRes = await agent.api.app.bsky.feed.getPosts({ uris: toFetch });
-				for (const post of parentRes.data.posts) next.set(post.uri, post);
+				await Promise.all(
+					toFetch.map(async (uri) => {
+						const rec = await getRecordDirect(agent, uri);
+						if (!rec) return;
+						// 親ポストの author は frontier の post と同一 DID
+						const childPost = frontier.map((u) => next.get(u)).find((p) => {
+							const r = p?.record as { reply?: { parent?: { uri: string } } };
+							return r?.reply?.parent?.uri === uri;
+						});
+						if (childPost) next.set(uri, buildPostView(rec, childPost.author));
+					})
+				);
 				frontier = toFetch;
 			}
 
