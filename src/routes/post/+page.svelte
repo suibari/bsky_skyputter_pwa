@@ -489,7 +489,7 @@
 			<div class="flex-1 min-h-0 relative">
 				<div
 					bind:this={highlightDiv}
-					class="absolute inset-0 text-base leading-relaxed whitespace-pre-wrap wrap-break-word overflow-hidden pointer-events-none text-gray-900 dark:text-gray-100"
+					class="absolute inset-0 text-base leading-relaxed whitespace-pre-wrap wrap-break-word overflow-x-hidden overflow-y-auto scrollbar-gutter-stable scrollbar-none pointer-events-none text-gray-900 dark:text-gray-100"
 					aria-hidden="true"
 				>{@html highlightedText}</div>
 				<textarea
@@ -497,7 +497,7 @@
 					bind:this={textareaEl}
 					onscroll={syncScroll}
 					placeholder={replyContext ? t.post.replyPlaceholder : quoteContext ? t.post.quotePlaceholder : t.post.placeholder}
-					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent p-0"
+					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent p-0 scrollbar-gutter-stable"
 					oninput={handleInput}
 					onblur={() => { cursorPos = textareaEl?.selectionStart ?? cursorPos; }}
 					onkeydown={handleKeydown}
