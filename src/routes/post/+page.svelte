@@ -56,6 +56,23 @@
 	let mentionLoading = $state(false);
 	let mentionFocusIdx = $state(-1);
 	let mentionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let vpOffsetBottom = $state(0);
+	let toolbarHeight = $state(56);
+
+	$effect(() => {
+		if (typeof window === 'undefined' || !window.visualViewport) return;
+		const vv = window.visualViewport;
+		const update = () => {
+			vpOffsetBottom = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+		};
+		vv.addEventListener('resize', update);
+		vv.addEventListener('scroll', update);
+		update();
+		return () => {
+			vv.removeEventListener('resize', update);
+			vv.removeEventListener('scroll', update);
+		};
+	});
 
 	function handleEmojiSelect(emoji: string) {
 		const pos = cursorPos;
@@ -541,16 +558,7 @@
 		/>
 	{/if}
 
-	{#if showMentionSuggestions}
-		<MentionSuggestions
-			actors={mentionActors}
-			loading={mentionLoading}
-			focusIndex={mentionFocusIdx}
-			onSelect={handleMentionSelect}
-		/>
-	{/if}
-
-	<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800 shrink-0 relative">
+	<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800 shrink-0 relative" bind:clientHeight={toolbarHeight}>
 		<div class="flex items-center gap-3">
 			<button
 				onclick={() => mediaFileInput.click()}
@@ -582,6 +590,23 @@
 
 {#if showEmojiPicker}
 	<EmojiPicker onSelect={handleEmojiSelect} onClose={() => { showEmojiPicker = false; }} />
+{/if}
+
+{#if showMentionSuggestions}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed left-0 right-0 max-w-md mx-auto z-50 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-xl overflow-hidden"
+		style="bottom: {vpOffsetBottom + 64 + toolbarHeight}px; max-height: 192px; overflow-y: auto;"
+		data-mention-suggestions
+		onmousedown={(e) => e.preventDefault()}
+	>
+		<MentionSuggestions
+			actors={mentionActors}
+			loading={mentionLoading}
+			focusIndex={mentionFocusIdx}
+			onSelect={handleMentionSelect}
+		/>
+	</div>
 {/if}
 
 <input
