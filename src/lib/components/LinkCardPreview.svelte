@@ -1,5 +1,8 @@
 <script lang="ts">
 	import type { OgpData } from '$lib/api/ogp';
+	import { getT } from '$lib/stores/language.svelte';
+
+	const t = $derived(getT());
 
 	let {
 		ogp,
@@ -20,7 +23,7 @@
 	<button
 		onclick={onDismiss}
 		class="absolute top-1.5 right-2 text-gray-400 hover:text-gray-600 text-xs z-10"
-		aria-label="リンクカードを削除"
+		aria-label={t.linkCard.ariaRemove}
 	>✕</button>
 
 	{#if loading}

@@ -20,6 +20,9 @@
 	import { getComposeText, setComposeText, clearComposeText, loadComposeText } from '$lib/stores/compose.svelte';
 	import EmojiPicker from '$lib/components/EmojiPicker.svelte';
 	import { recordEmojiUse } from '$lib/stores/emoji-frequency.svelte';
+	import { getT } from '$lib/stores/language.svelte';
+
+	const t = $derived(getT());
 
 	let text = $state(getComposeText());
 	let images = $state<File[]>([]);
@@ -372,11 +375,11 @@
 			ogpCurrentUrl = null;
 			resetMention();
 			clearComposeText();
-			showToast('投稿しました', 'success');
+			showToast(t.post.toast.posted, 'success');
 		} catch (e) {
 			videoUploading = false;
 			videoProgress = null;
-			showToast(e instanceof Error ? e.message : '投稿に失敗しました', 'error');
+			showToast(e instanceof Error ? e.message : t.post.toast.postFailed, 'error');
 		} finally {
 			posting = false;
 		}
@@ -396,9 +399,9 @@
 			draftId = id;
 			if (!draftCreatedAt) draftCreatedAt = now;
 			clearComposeText();
-			showToast('下書きを保存しました', 'success');
+			showToast(t.post.toast.draftSaved, 'success');
 		} catch {
-			showToast('下書きの保存に失敗しました', 'error');
+			showToast(t.post.toast.draftSaveFailed, 'error');
 		} finally {
 			savingDraft = false;
 		}
@@ -430,7 +433,7 @@
 		}
 
 		if (hasConflict) {
-			showToast('動画と画像は同時に添付できません', 'error');
+			showToast(t.post.toast.mediaConflict, 'error');
 		}
 
 		mediaFileInput.value = '';
@@ -450,7 +453,7 @@
 				{#if savingDraft}
 					<LoadingSpinner size={14} />
 				{:else}
-					下書き
+					{t.post.draft}
 				{/if}
 			</button>
 			<button
@@ -462,14 +465,14 @@
 				{#if posting}
 					<LoadingSpinner size={14} class="text-white" />
 				{/if}
-				投稿
+				{t.post.post}
 			</button>
 		</div>
 	</header>
 
 	<div class="flex-1 flex flex-col px-4 pt-3 gap-3 min-h-0">
 		{#if draftId}
-			<p class="text-xs text-[#0085ff] bg-blue-50 dark:bg-blue-950 px-3 py-1.5 rounded-lg shrink-0">下書きを編集中</p>
+			<p class="text-xs text-[#0085ff] bg-blue-50 dark:bg-blue-950 px-3 py-1.5 rounded-lg shrink-0">{t.post.editingDraft}</p>
 		{/if}
 
 		<div class="flex gap-3 flex-1 min-h-0">
@@ -477,7 +480,7 @@
 				{#if getSession()?.handle}
 					<img
 						src={avatarThumbnail(myAvatar)}
-						alt="アバター"
+						alt={t.post.ariaAvatar}
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
 					/>
@@ -493,7 +496,7 @@
 					bind:value={text}
 					bind:this={textareaEl}
 					onscroll={syncScroll}
-					placeholder={replyContext ? '返信する...' : quoteContext ? '引用コメントを入力...' : 'いまなにしてる？'}
+					placeholder={replyContext ? t.post.replyPlaceholder : quoteContext ? t.post.quotePlaceholder : t.post.placeholder}
 					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent p-0"
 					oninput={handleInput}
 					onblur={() => { cursorPos = textareaEl?.selectionStart ?? cursorPos; }}
@@ -513,7 +516,7 @@
 				{#if videoUploading}
 					<div class="flex items-center gap-2 text-sm text-gray-500">
 						<LoadingSpinner size={16} />
-						<span>動画を処理中{videoProgress !== null ? `... ${videoProgress}%` : '...'}</span>
+						<span>{t.post.processingVideo(videoProgress)}</span>
 					</div>
 				{:else}
 					<VideoPicker bind:video />
@@ -527,9 +530,9 @@
 			<button
 				onclick={() => (replyContext = null)}
 				class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
-				aria-label="返信をキャンセル"
+				aria-label={t.post.cancelReply}
 			>✕</button>
-			<p class="text-xs text-blue-500 font-medium mb-0.5">↩ 返信先 @{replyContext.authorHandle}</p>
+			<p class="text-xs text-blue-500 font-medium mb-0.5">{t.post.replyLabel(replyContext.authorHandle)}</p>
 			{#if replyContext.text}
 				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 pr-4">{replyContext.text}</p>
 			{/if}
@@ -541,9 +544,9 @@
 			<button
 				onclick={() => (quoteContext = null)}
 				class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
-				aria-label="引用をキャンセル"
+				aria-label={t.post.cancelQuote}
 			>✕</button>
-			<p class="text-xs text-amber-600 font-medium mb-0.5">❝ 引用 @{quoteContext.authorHandle}</p>
+			<p class="text-xs text-amber-600 font-medium mb-0.5">{t.post.quoteLabel(quoteContext.authorHandle)}</p>
 			{#if quoteContext.text}
 				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{quoteContext.text}</p>
 			{/if}
@@ -565,7 +568,7 @@
 				disabled={!canAddMedia && video !== null}
 				class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-[#0085ff]
 					disabled:opacity-30 disabled:cursor-not-allowed"
-				aria-label="メディアを追加"
+				aria-label={t.post.ariaAddMedia}
 			>
 				<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
@@ -577,7 +580,7 @@
 					showEmojiPicker = !showEmojiPicker;
 				}}
 				class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-[#0085ff] {showEmojiPicker ? 'text-[#0085ff] bg-blue-50 dark:bg-blue-950' : ''}"
-				aria-label="絵文字を追加"
+				aria-label={t.post.ariaAddEmoji}
 			>
 				<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getFrequentEmojis } from '$lib/stores/emoji-frequency.svelte';
+	import { getT } from '$lib/stores/language.svelte';
 
 	type Props = {
 		onSelect: (emoji: string) => void;
@@ -8,9 +9,11 @@
 
 	const { onSelect, onClose }: Props = $props();
 
-	const CATEGORIES: { label: string; emojis: string[] }[] = [
+	const t = $derived(getT());
+
+	const BASE_CATEGORIES: { key: keyof typeof t.emojiCategories; emojis: string[] }[] = [
 		{
-			label: '顔・感情',
+			key: 'faceEmotion',
 			emojis: [
 				'😀','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘',
 				'😗','😙','😚','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐',
@@ -22,7 +25,7 @@
 			]
 		},
 		{
-			label: '手・人',
+			key: 'handPeople',
 			emojis: [
 				'👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌','🤞','🤟','🤘','🤙','👈','👉','👆',
 				'🖕','👇','☝','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍',
@@ -30,7 +33,7 @@
 			]
 		},
 		{
-			label: 'ハート・記号',
+			key: 'heartSymbol',
 			emojis: [
 				'❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖',
 				'💘','💝','💟','☮️','✝️','☪️','🕉️','✡️','🔯','☯️','☦️','🛐','⛎','♈','♉','♊',
@@ -41,7 +44,7 @@
 			]
 		},
 		{
-			label: '自然・動物',
+			key: 'natureAnimal',
 			emojis: [
 				'🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈',
 				'🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛',
@@ -52,7 +55,7 @@
 			]
 		},
 		{
-			label: '食べ物・飲み物',
+			key: 'foodDrink',
 			emojis: [
 				'🍎','🍊','🍋','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑',
 				'🥦','🥬','🥒','🌽','🍄','🥕','🧄','🧅','🥔','🍞','🥐','🥖','🫓','🥨','🥯','🧀',
@@ -63,7 +66,7 @@
 			]
 		},
 		{
-			label: '活動・スポーツ',
+			key: 'activity',
 			emojis: [
 				'⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🥍','🏑','🏏',
 				'🪃','🥅','⛳','🪁','🏹','🎣','🤿','🎽','🎿','🛷','🥌','🪂','🏋','🤸','⛹','🤺',
@@ -73,7 +76,7 @@
 			]
 		},
 		{
-			label: '旅行・場所',
+			key: 'travel',
 			emojis: [
 				'🚗','🚕','🚙','🚌','🚎','🏎','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍','🛵',
 				'🛺','🚲','🛴','🛹','🛼','🛶','⛵','🚤','🛥','🚢','✈','🛩','🛫','🛬','🛸','🚁',
@@ -83,7 +86,7 @@
 			]
 		},
 		{
-			label: '物・その他',
+			key: 'object',
 			emojis: [
 				'💌','🗑','📦','📬','📮','📪','📫','📭','📬','📮','📯','📢','📣','📻','📱','📲',
 				'☎','📞','📟','📠','💡','🔦','🕯','🪔','🧲','🔭','🔬','🧬','🦠','💊','🩹','🩺',
@@ -94,6 +97,8 @@
 			]
 		}
 	];
+
+	const categories = $derived(BASE_CATEGORIES.map((c) => ({ label: t.emojiCategories[c.key], emojis: c.emojis })));
 
 	let frequentEmojis = $state<string[]>([]);
 
@@ -117,7 +122,7 @@
 		<div class="overflow-y-auto flex-1 p-3 space-y-3">
 			{#if frequentEmojis.length > 0}
 				<div>
-					<p class="text-[10px] text-gray-400 dark:text-gray-500 font-medium mb-1.5 px-0.5">よく使う</p>
+					<p class="text-[10px] text-gray-400 dark:text-gray-500 font-medium mb-1.5 px-0.5">{t.emojiCategories.recent}</p>
 					<div class="flex flex-wrap gap-0.5">
 						{#each frequentEmojis as emoji (emoji)}
 							<button
@@ -130,7 +135,7 @@
 				<hr class="border-gray-100 dark:border-gray-700" />
 			{/if}
 
-			{#each CATEGORIES as cat}
+			{#each categories as cat}
 				<div>
 					<p class="text-[10px] text-gray-400 dark:text-gray-500 font-medium mb-1.5 px-0.5">{cat.label}</p>
 					<div class="flex flex-wrap gap-0.5">

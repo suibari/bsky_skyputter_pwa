@@ -2,6 +2,9 @@
 	import type { AppBskyActorDefs } from '@atproto/api';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 	import { avatarThumbnail } from '$lib/image';
+	import { getT } from '$lib/stores/language.svelte';
+
+	const t = $derived(getT());
 
 	let {
 		actors,
@@ -28,7 +31,7 @@
 		<LoadingSpinner size={18} />
 	</div>
 {:else if actors.length === 0}
-	<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-3">見つかりませんでした</p>
+	<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-3">{t.mentionSuggestions.notFound}</p>
 {:else}
 	<ul bind:this={listEl}>
 		{#each actors as actor, i}

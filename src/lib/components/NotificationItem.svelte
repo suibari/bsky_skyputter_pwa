@@ -3,6 +3,9 @@
 	import ImageViewer from './ImageViewer.svelte';
 	import VideoViewer from './VideoViewer.svelte';
 	import { avatarThumbnail } from '$lib/image';
+	import { getT } from '$lib/stores/language.svelte';
+
+	const t = $derived(getT());
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
 	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
@@ -39,16 +42,6 @@
 		onQuote?: (uri: string, cid: string) => void;
 	} = $props();
 
-	const reasonLabels: Record<string, string> = {
-		like: 'いいねしました',
-		repost: 'リポストしました',
-		follow: 'フォローしました',
-		mention: 'にメンションしました',
-		reply: '返信しました',
-		quote: 'を引用しました',
-		'subscribed-post': '投稿しました'
-	};
-
 	const reasonIcons: Record<string, { color: string; icon: string }> = {
 		like: { color: '#ef4444', icon: 'heart' },
 		repost: { color: '#22c55e', icon: 'repost' },
@@ -58,6 +51,16 @@
 		quote: { color: '#f59e0b', icon: 'quote' },
 		'subscribed-post': { color: '#8b5cf6', icon: 'post' }
 	};
+
+	const reasonLabels = $derived<Record<string, string>>({
+		like: t.notificationItem.reasons.like,
+		repost: t.notificationItem.reasons.repost,
+		follow: t.notificationItem.reasons.follow,
+		mention: t.notificationItem.reasons.mention,
+		reply: t.notificationItem.reasons.reply,
+		quote: t.notificationItem.reasons.quote,
+		'subscribed-post': t.notificationItem.reasons.subscribedPost
+	});
 
 	const label = $derived(reasonLabels[notification.reason] ?? notification.reason);
 	const iconInfo = $derived(reasonIcons[notification.reason] ?? { color: '#6b7280', icon: 'bell' });
@@ -122,11 +125,11 @@
 	function formatTime(iso: string): string {
 		const diff = Date.now() - new Date(iso).getTime();
 		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'たった今';
-		if (mins < 60) return `${mins}分前`;
+		if (mins < 1) return t.time.justNow;
+		if (mins < 60) return t.time.minutesAgo(mins);
 		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours}時間前`;
-		return `${Math.floor(hours / 24)}日前`;
+		if (hours < 24) return t.time.hoursAgo(hours);
+		return t.time.daysAgo(Math.floor(hours / 24));
 	}
 </script>
 
@@ -189,7 +192,7 @@
 			<button
 				class="text-left w-full mt-0.5"
 				onclick={() => (expanded = !expanded)}
-				aria-label={expanded ? '折りたたむ' : '展開する'}
+				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
 			>
 				{#if threadTexts.length === 1}
 					<p class="text-xs text-gray-500 dark:text-gray-400 {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
@@ -209,7 +212,7 @@
 			<button
 				class="text-left w-full"
 				onclick={() => (expanded = !expanded)}
-				aria-label={expanded ? '折りたたむ' : '展開する'}
+				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
 			>
 				<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
 				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
@@ -223,11 +226,11 @@
 					<button
 						class="w-full overflow-hidden focus:outline-none"
 						onclick={() => openViewer(i)}
-						aria-label="画像を拡大"
+						aria-label={t.notificationItem.ariaZoomImage}
 					>
 						<img
 							src={img.thumb}
-							alt="添付画像"
+							alt={t.notificationItem.altAttachedImage}
 							class="w-full object-cover {imgs.length === 1 ? 'max-h-60' : 'aspect-square'}"
 							style={imgs.length === 1 && img.aspectRatio
 								? `aspect-ratio: ${img.aspectRatio.width} / ${img.aspectRatio.height}`
@@ -244,10 +247,10 @@
 				class="relative mt-2 w-full rounded-xl overflow-hidden bg-black focus:outline-none"
 				style={vid.aspectRatio ? `aspect-ratio: ${vid.aspectRatio.width} / ${vid.aspectRatio.height}` : 'aspect-ratio: 16 / 9'}
 				onclick={() => (videoViewerOpen = true)}
-				aria-label="動画を再生"
+				aria-label={t.notificationItem.ariaPlayVideo}
 			>
 				{#if vid.thumbnail}
-					<img src={vid.thumbnail} alt="動画サムネイル" class="w-full h-full object-cover" />
+					<img src={vid.thumbnail} alt={t.notificationItem.altVideoThumbnail} class="w-full h-full object-cover" />
 				{/if}
 				<div class="absolute inset-0 flex items-center justify-center">
 					<div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
@@ -322,7 +325,7 @@
 					<button
 						onclick={() => onLike?.(notification.uri, notification.cid)}
 						class="p-1 {liked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}"
-						aria-label="いいね"
+						aria-label={t.notificationItem.ariaLike}
 					>
 						<svg class="w-4 h-4" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
@@ -333,7 +336,7 @@
 					<button
 						onclick={() => onReply?.(notification.uri, notification.cid)}
 						class="p-1 text-gray-400 hover:text-[#0085ff]"
-						aria-label="返信"
+						aria-label={t.notificationItem.ariaReply}
 					>
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
@@ -344,7 +347,7 @@
 					<button
 						onclick={() => onQuote?.(notification.uri, notification.cid)}
 						class="p-1 text-gray-400 hover:text-[#f59e0b]"
-						aria-label="引用"
+						aria-label={t.notificationItem.ariaQuote}
 					>
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5h5.25v5.25L5.25 19.5H3l2.25-3.75H3V10.5zm7.5 0h5.25v5.25L12.75 19.5H10.5l2.25-3.75H10.5V10.5z" />

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getT } from '$lib/stores/language.svelte';
+
 	let {
 		images,
 		startIndex = 0,
@@ -8,6 +10,8 @@
 		startIndex?: number;
 		onClose: () => void;
 	} = $props();
+
+	const t = $derived(getT());
 
 	let currentIndex = $state(startIndex);
 
@@ -39,7 +43,7 @@
 	<button
 		class="absolute top-4 right-4 p-2 text-white/80 hover:text-white"
 		onclick={onClose}
-		aria-label="閉じる"
+		aria-label={t.imageViewer.ariaClose}
 	>
 		<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 			<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -48,7 +52,7 @@
 
 	<img
 		src={images[currentIndex]}
-		alt="画像"
+		alt={t.imageViewer.altImage}
 		class="max-w-full max-h-[90dvh] object-contain select-none"
 		onclick={(e) => e.stopPropagation()}
 		draggable="false"
@@ -59,7 +63,7 @@
 			class="absolute left-3 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white disabled:opacity-30"
 			onclick={prev}
 			disabled={currentIndex === 0}
-			aria-label="前の画像"
+			aria-label={t.imageViewer.ariaPrev}
 		>
 			<svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -69,7 +73,7 @@
 			class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white disabled:opacity-30"
 			onclick={next}
 			disabled={currentIndex === images.length - 1}
-			aria-label="次の画像"
+			aria-label={t.imageViewer.ariaNext}
 		>
 			<svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

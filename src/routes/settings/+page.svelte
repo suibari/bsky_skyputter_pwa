@@ -6,8 +6,10 @@
 	import { createAgent } from '$lib/api/agent';
 	import { oauthClient } from '$lib/stores/oauth-client';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getTheme, setTheme, type Theme } from '$lib/stores/theme.svelte';
+	import { getT } from '$lib/stores/language.svelte';
 	import { avatarThumbnail } from '$lib/image';
 
 	let pushEnabled = $state(false);
@@ -15,6 +17,9 @@
 	let logoutLoading = $state(false);
 	const session = $derived(getSession());
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
+
+	const t = $derived(getT());
+	const themeOptions: Theme[] = ['system', 'light', 'dark'];
 
 	onMount(async () => {
 		const s = getSession();
@@ -51,7 +56,7 @@
 
 	async function togglePush() {
 		if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-			showToast('このブラウザはPush通知に対応していません', 'error');
+			showToast(t.settings.toast.pushNotSupported, 'error');
 			return;
 		}
 		pushLoading = true;
@@ -62,12 +67,12 @@
 				if (sub) {
 					await sub.unsubscribe();
 					pushEnabled = false;
-					showToast('Push通知をオフにしました', 'info');
+					showToast(t.settings.toast.pushOff, 'info');
 				}
 			} else {
 				const perm = await Notification.requestPermission();
 				if (perm !== 'granted') {
-					showToast('通知の許可が必要です', 'error');
+					showToast(t.settings.toast.pushPermissionRequired, 'error');
 					return;
 				}
 
@@ -94,10 +99,10 @@
 				if (!res.ok) throw new Error('Push購読の登録に失敗しました');
 
 				pushEnabled = true;
-				showToast('Push通知をオンにしました', 'success');
+				showToast(t.settings.toast.pushOn, 'success');
 			}
 		} catch (e) {
-			showToast(e instanceof Error ? e.message : 'エラーが発生しました', 'error');
+			showToast(e instanceof Error ? e.message : t.settings.toast.pushFailed, 'error');
 		} finally {
 			pushLoading = false;
 		}
@@ -116,18 +121,11 @@
 		clearSession();
 		goto('/login');
 	}
-
-	const themeLabels: Record<Theme, string> = {
-		system: 'システム',
-		light: 'ライト',
-		dark: 'ダーク'
-	};
-	const themeOptions: Theme[] = ['system', 'light', 'dark'];
 </script>
 
 <div>
 	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
-		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">設定</h1>
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">{t.settings.header}</h1>
 	</header>
 
 	<div class="px-4 pt-2">
@@ -136,7 +134,7 @@
 				<div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
 					<img
 						src={avatarThumbnail(myAvatar)}
-						alt="アバター"
+						alt={t.settings.ariaAvatar}
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
 					/>
@@ -149,7 +147,12 @@
 		{/if}
 
 		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
-			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">テーマ</p>
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.settings.sections.language}</p>
+			<LanguageSwitcher />
+		</div>
+
+		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.settings.sections.theme}</p>
 			<div class="flex gap-2">
 				{#each themeOptions as option}
 					<button
@@ -159,18 +162,18 @@
 								? 'bg-[#0085ff] text-white border-[#0085ff]'
 								: 'bg-transparent text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'}"
 					>
-						{themeLabels[option]}
+						{t.settings.theme[option]}
 					</button>
 				{/each}
 			</div>
 		</div>
 
 		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
-			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">通知設定</p>
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.settings.sections.notifications}</p>
 			<div class="flex items-center justify-between">
 				<div>
-					<p class="text-sm font-medium text-gray-800 dark:text-gray-200">Push通知</p>
-					<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">新着通知をプッシュ通知で受け取る</p>
+					<p class="text-sm font-medium text-gray-800 dark:text-gray-200">{t.settings.push.title}</p>
+					<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.settings.push.description}</p>
 				</div>
 				{#if pushLoading}
 					<LoadingSpinner size={24} />
@@ -181,7 +184,7 @@
 							{pushEnabled ? 'bg-[#0085ff]' : 'bg-gray-200 dark:bg-gray-700'}"
 						role="switch"
 						aria-checked={pushEnabled}
-						aria-label="Push通知"
+						aria-label={t.settings.push.ariaLabel}
 					>
 						<span
 							class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200
@@ -193,7 +196,7 @@
 		</div>
 
 		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
-			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">アカウント</p>
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.settings.sections.account}</p>
 			<button
 				onclick={handleLogout}
 				disabled={logoutLoading}
@@ -202,20 +205,20 @@
 				{#if logoutLoading}
 					<LoadingSpinner size={16} class="text-red-500" />
 				{/if}
-				ログアウト
+				{t.settings.logout}
 			</button>
 		</div>
 
 		<div class="py-3">
-			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">SkyPutterについて</p>
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.settings.sections.about}</p>
 			<div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-				<p>しずか、でもとどく</p>
+				<p>{t.settings.about.tagline}</p>
 				<div class="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
 					<a href="https://bsky.app/profile/suibari.com" target="_blank" rel="noopener noreferrer" class="hover:underline">suibari</a>
 					<span>/</span>
 					<a href="https://github.com/suibari/bsky_skyputter_pwa" target="_blank" rel="noopener noreferrer" class="hover:underline">GitHub</a>
 				</div>
-				<p class="text-xs text-gray-400 dark:text-gray-500">Blueskyへの半投稿専用PWA。タイムラインは持たず、投稿・自分の投稿一覧・通知・下書きに機能を絞る。インプット過多による消耗を防ぎ、アウトプットに集中するクリエイターのためのアプリ。</p>
+				<p class="text-xs text-gray-400 dark:text-gray-500">{t.settings.about.description}</p>
 			</div>
 		</div>
 

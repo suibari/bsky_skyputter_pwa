@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import LoadingSpinner from './LoadingSpinner.svelte';
+	import { getT } from '$lib/stores/language.svelte';
 
 	let {
 		onLoadMore,
@@ -28,6 +29,8 @@
 	});
 
 	onDestroy(() => observer?.disconnect());
+
+	const t = $derived(getT());
 </script>
 
 <div bind:this={sentinel} class="h-1"></div>
@@ -37,5 +40,5 @@
 	</div>
 {/if}
 {#if !hasMore && !loading}
-	<p class="text-center text-sm text-gray-400 py-6">すべて読み込みました</p>
+	<p class="text-center text-sm text-gray-400 py-6">{t.infiniteScroll.loadAll}</p>
 {/if}

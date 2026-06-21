@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { getT } from '$lib/stores/language.svelte';
+
 	let {
 		open = false,
 		title = '',
 		message = '',
-		confirmLabel = '削除',
+		confirmLabel,
 		onConfirm,
 		onCancel
 	}: {
@@ -14,6 +16,8 @@
 		onConfirm: () => void;
 		onCancel: () => void;
 	} = $props();
+
+	const t = $derived(getT());
 </script>
 
 {#if open}
@@ -26,13 +30,13 @@
 					onclick={onCancel}
 					class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium"
 				>
-					キャンセル
+					{t.modal.cancel}
 				</button>
 				<button
 					onclick={onConfirm}
 					class="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium"
 				>
-					{confirmLabel}
+					{confirmLabel ?? t.common.delete}
 				</button>
 			</div>
 		</div>

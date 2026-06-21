@@ -1,35 +1,25 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { getUnreadCount, triggerNotificationsTap } from '$lib/stores/notifications.svelte';
+	import { getT } from '$lib/stores/language.svelte';
 
-	const tabs = [
-		{
-			href: '/post',
-			label: '投稿',
-			icon: 'pencil'
-		},
-		{
-			href: '/notifications',
-			label: '通知',
-			icon: 'bell',
-			badge: true
-		},
-		{
-			href: '/drafts',
-			label: '下書き',
-			icon: 'document'
-		},
-		{
-			href: '/profile',
-			label: 'プロフ',
-			icon: 'person'
-		},
-		{
-			href: '/settings',
-			label: '設定',
-			icon: 'cog'
-		}
-	];
+	const t = $derived(getT());
+
+	const BASE_TABS = [
+		{ href: '/post',          icon: 'pencil'   },
+		{ href: '/notifications', icon: 'bell',   badge: true },
+		{ href: '/drafts',        icon: 'document' },
+		{ href: '/profile',       icon: 'person'   },
+		{ href: '/settings',      icon: 'cog'      }
+	] as const;
+
+	const tabs = $derived([
+		{ ...BASE_TABS[0], label: t.nav.post          },
+		{ ...BASE_TABS[1], label: t.nav.notifications },
+		{ ...BASE_TABS[2], label: t.nav.drafts        },
+		{ ...BASE_TABS[3], label: t.nav.profile       },
+		{ ...BASE_TABS[4], label: t.nav.settings      }
+	]);
 
 	const isActive = (href: string) => $page.url.pathname === href;
 </script>

@@ -7,9 +7,12 @@
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
+	import { getT } from '$lib/stores/language.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { listNotifications, markSeen } from '$lib/api/notifications';
 	import { createLike } from '$lib/api/posts';
+
+	const t = $derived(getT());
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
 
@@ -243,7 +246,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 			hasMore = !!data.cursor;
 			await fetchSubjectPosts(data.notifications);
 		} catch (e) {
-			showToast(e instanceof Error ? e.message : '読み込みに失敗しました', 'error');
+			showToast(e instanceof Error ? e.message : t.notifications.toast.loadFailed, 'error');
 		} finally {
 			loading = false;
 		}
@@ -253,9 +256,9 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 		try {
 			await createLike(uri, cid);
 			likedUris = new Set([...likedUris, uri]);
-			showToast('いいねしました', 'success');
+			showToast(t.notifications.toast.liked, 'success');
 		} catch (e) {
-			showToast(e instanceof Error ? e.message : 'いいねに失敗しました', 'error');
+			showToast(e instanceof Error ? e.message : t.notifications.toast.likeFailed, 'error');
 		}
 	}
 
@@ -297,7 +300,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 
 <div>
 	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
-		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">Notification</h1>
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">{t.notifications.header}</h1>
 	</header>
 
 	{#if !initialLoaded}
@@ -305,7 +308,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 			<LoadingSpinner />
 		</div>
 	{:else if notifications.length === 0}
-		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">通知はありません</p>
+		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">{t.notifications.empty}</p>
 	{:else}
 		{#each notifications as notification (notification.uri)}
 			<NotificationItem

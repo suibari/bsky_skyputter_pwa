@@ -8,6 +8,7 @@
 	import { setUnreadCount, triggerNotificationsTap } from '$lib/stores/notifications.svelte';
 	import { getUnreadCount, markSeen } from '$lib/api/notifications';
 	import { loadTheme } from '$lib/stores/theme.svelte';
+	import { loadLanguage } from '$lib/stores/language.svelte';
 
 	let { children } = $props();
 
@@ -15,6 +16,7 @@
 
 	onMount(async () => {
 		loadTheme();
+		loadLanguage();
 
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/service-worker.js').catch(() => {});

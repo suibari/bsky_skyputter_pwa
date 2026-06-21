@@ -9,7 +9,10 @@
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { getSession } from '$lib/stores/auth.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
+	import { getT } from '$lib/stores/language.svelte';
 	import { createAgent } from '$lib/api/agent';
+
+	const t = $derived(getT());
 	import { getAuthorFeed, deletePost } from '$lib/api/posts';
 
 	let posts = $state<AppBskyFeedDefs.FeedViewPost[]>([]);
@@ -47,7 +50,7 @@
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
 		} catch (e) {
-			showToast(e instanceof Error ? e.message : '読み込みに失敗しました', 'error');
+			showToast(e instanceof Error ? e.message : t.profile.toast.loadFailed, 'error');
 		} finally {
 			loading = false;
 			initialLoaded = true;
@@ -59,9 +62,9 @@
 		try {
 			await deletePost(deleteTarget);
 			posts = posts.filter((p) => p.post.uri !== deleteTarget);
-			showToast('削除しました', 'success');
+			showToast(t.profile.toast.deleted, 'success');
 		} catch {
-			showToast('削除に失敗しました', 'error');
+			showToast(t.profile.toast.deleteFailed, 'error');
 		} finally {
 			deleteTarget = null;
 		}
@@ -83,7 +86,7 @@
 
 <div>
 	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
-		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">プロフィール</h1>
+		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">{t.profile.header}</h1>
 	</header>
 
 	<!-- プロフィールカード -->
@@ -93,7 +96,7 @@
 				<div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden shrink-0">
 					<img
 						src={avatarThumbnail(profile.avatar)}
-						alt="アバター"
+						alt={t.profile.ariaAvatar}
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
 					/>
@@ -107,9 +110,9 @@
 				<p class="text-sm text-gray-700 dark:text-gray-300 mt-3 whitespace-pre-wrap">{profile.description}</p>
 			{/if}
 			<div class="flex gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
-				<span><b class="text-gray-900 dark:text-gray-50">{profile.followsCount ?? 0}</b> フォロー</span>
-				<span><b class="text-gray-900 dark:text-gray-50">{profile.followersCount ?? 0}</b> フォロワー</span>
-				<span><b class="text-gray-900 dark:text-gray-50">{profile.postsCount ?? 0}</b> 投稿</span>
+				<span><b class="text-gray-900 dark:text-gray-50">{profile.followsCount ?? 0}</b> {t.profile.follows}</span>
+				<span><b class="text-gray-900 dark:text-gray-50">{profile.followersCount ?? 0}</b> {t.profile.followers}</span>
+				<span><b class="text-gray-900 dark:text-gray-50">{profile.postsCount ?? 0}</b> {t.profile.posts}</span>
 			</div>
 		{:else}
 			<div class="flex items-center gap-3">
@@ -127,7 +130,7 @@
 			<LoadingSpinner />
 		</div>
 	{:else if posts.length === 0}
-		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">まだ投稿がありません</p>
+		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">{t.profile.empty}</p>
 	{:else}
 		{#each posts as feedViewPost (feedViewPost.post.uri)}
 			<PostCard
@@ -143,8 +146,9 @@
 
 <Modal
 	open={!!deleteTarget}
-	title="投稿を削除"
-	message="この投稿を削除しますか？この操作は取り消せません。"
+	title={t.profile.modal.title}
+	message={t.profile.modal.message}
+	confirmLabel={t.common.delete}
 	onConfirm={confirmDelete}
 	onCancel={() => (deleteTarget = null)}
 />
