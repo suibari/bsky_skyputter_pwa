@@ -130,6 +130,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 			);
 
 			// notifUris の viewer.like を AppView で確認（他アプリのイイネを反映）
+			// AppView のポストは embed（画像・動画等）を含む完全なデータなので next も更新する
 			if (notifUris.length > 0) {
 				try {
 					const appViewRes = await agent.api.app.bsky.feed.getPosts({ uris: notifUris });
@@ -137,6 +138,7 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 						if ((post.viewer as { like?: string } | undefined)?.like) {
 							nextLiked.add(post.uri);
 						}
+						next.set(post.uri, post);
 					}
 				} catch {
 					// AppView に未伝播の場合は無視
@@ -241,10 +243,10 @@ import { setUnreadCount, getNotificationsTapCount } from '$lib/stores/notificati
 		loading = true;
 		try {
 			const data = await listNotifications(cursor);
-			notifications = [...notifications, ...data.notifications];
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
 			await fetchSubjectPosts(data.notifications);
+			notifications = [...notifications, ...data.notifications];
 		} catch (e) {
 			showToast(e instanceof Error ? e.message : t.notifications.toast.loadFailed, 'error');
 		} finally {
