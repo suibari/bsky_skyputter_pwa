@@ -158,7 +158,7 @@ export const en: Translation = {
 			ariaLabel: 'Push notifications'
 		},
 		language: {
-			ja: '日本語',
+			ja: 'Japanese',
 			en: 'English'
 		},
 		logout: 'Logout',
