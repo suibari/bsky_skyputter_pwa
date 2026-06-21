@@ -8,6 +8,7 @@
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getTheme, setTheme, type Theme } from '$lib/stores/theme.svelte';
+	import { avatarThumbnail } from '$lib/image';
 
 	let pushEnabled = $state(false);
 	let pushLoading = $state(false);
@@ -134,7 +135,7 @@
 			<div class="flex items-center gap-3 py-4 border-b border-gray-100 dark:border-gray-800">
 				<div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
 					<img
-						src={myAvatar}
+						src={avatarThumbnail(myAvatar)}
 						alt="アバター"
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

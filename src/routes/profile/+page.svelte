@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { AppBskyActorDefs, AppBskyFeedDefs } from '@atproto/api';
+	import { avatarThumbnail } from '$lib/image';
 	import PostCard from '$lib/components/PostCard.svelte';
 	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
 	import Modal from '$lib/components/Modal.svelte';
@@ -91,7 +92,7 @@
 			<div class="flex items-center gap-3">
 				<div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden shrink-0">
 					<img
-						src={profile.avatar}
+						src={avatarThumbnail(profile.avatar)}
 						alt="アバター"
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

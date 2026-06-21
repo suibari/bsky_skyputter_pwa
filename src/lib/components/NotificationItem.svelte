@@ -2,6 +2,7 @@
 	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
 	import ImageViewer from './ImageViewer.svelte';
 	import VideoViewer from './VideoViewer.svelte';
+	import { avatarThumbnail } from '$lib/image';
 
 	type Notification = AppBskyNotificationListNotifications.Notification;
 	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
@@ -134,7 +135,7 @@
 		<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
 			{#if notification.author.avatar}
 				<img
-					src={notification.author.avatar}
+					src={avatarThumbnail(notification.author.avatar)}
 					alt={notification.author.handle}
 					class="w-full h-full object-cover"
 				/>
@@ -284,7 +285,7 @@
 			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
 				<div class="flex items-center gap-1.5 mb-1">
 					{#if quoted.author.avatar}
-						<img src={quoted.author.avatar} alt={quoted.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+						<img src={avatarThumbnail(quoted.author.avatar)} alt={quoted.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
 					{/if}
 					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
 						{quoted.author.displayName || quoted.author.handle}
@@ -302,7 +303,7 @@
 			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
 				<div class="flex items-center gap-1.5 mb-1">
 					{#if subjectPost.author.avatar}
-						<img src={subjectPost.author.avatar} alt={subjectPost.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+						<img src={avatarThumbnail(subjectPost.author.avatar)} alt={subjectPost.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
 					{/if}
 					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
 						{subjectPost.author.displayName || subjectPost.author.handle}

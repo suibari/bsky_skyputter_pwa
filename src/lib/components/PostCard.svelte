@@ -2,6 +2,7 @@
 	import type { AppBskyFeedDefs } from '@atproto/api';
 	import ImageViewer from './ImageViewer.svelte';
 	import VideoViewer from './VideoViewer.svelte';
+	import { avatarThumbnail } from '$lib/image';
 
 	let {
 		feedViewPost,
@@ -99,7 +100,7 @@
 <article class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-3">
 	<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0 overflow-hidden">
 		{#if author.avatar}
-			<img src={author.avatar} alt={author.handle} class="w-full h-full object-cover" />
+			<img src={avatarThumbnail(author.avatar)} alt={author.handle} class="w-full h-full object-cover" />
 		{/if}
 	</div>
 
@@ -188,7 +189,7 @@
 			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
 				<div class="flex items-center gap-1.5 mb-1">
 					{#if quoted.author.avatar}
-						<img src={quoted.author.avatar} alt={quoted.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+						<img src={avatarThumbnail(quoted.author.avatar)} alt={quoted.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
 					{/if}
 					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
 						{quoted.author.displayName || quoted.author.handle}

@@ -9,8 +9,10 @@
 	import { getSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
-	import type { BlobRef, AppBskyFeedPost } from '@atproto/api';
+	import type { BlobRef, AppBskyFeedPost, AppBskyActorDefs } from '@atproto/api';
 	import { createPost, type PostExternalEmbed } from '$lib/api/posts';
+	import MentionSuggestions from '$lib/components/MentionSuggestions.svelte';
+	import { avatarThumbnail } from '$lib/image';
 	import { uploadImage, uploadVideo, getImageDimensions, getVideoDimensions } from '$lib/api/media';
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
 	import { fetchOgp, type OgpData } from '$lib/api/ogp';
@@ -48,6 +50,13 @@
 	let showEmojiPicker = $state(false);
 	let cursorPos = $state(0);
 
+	let mentionQuery = $state<string | null>(null);
+	let mentionStart = $state(0);
+	let mentionActors = $state<AppBskyActorDefs.ProfileViewBasic[]>([]);
+	let mentionLoading = $state(false);
+	let mentionFocusIdx = $state(-1);
+	let mentionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 	function handleEmojiSelect(emoji: string) {
 		const pos = cursorPos;
 		text = text.slice(0, pos) + emoji + text.slice(pos);
@@ -60,6 +69,94 @@
 			textareaEl?.setSelectionRange(newPos, newPos);
 		});
 	}
+
+	function resetMention() {
+		mentionQuery = null;
+		mentionActors = [];
+		mentionFocusIdx = -1;
+		mentionLoading = false;
+		if (mentionDebounceTimer) { clearTimeout(mentionDebounceTimer); mentionDebounceTimer = null; }
+	}
+
+	function detectMention(value: string, pos: number): { query: string; start: number } | null {
+		const before = value.slice(0, pos);
+		const match = before.match(/(^|[\s\n])@([a-zA-Z0-9._-]*)$/);
+		if (!match) return null;
+		return { query: match[2], start: before.lastIndexOf('@') };
+	}
+
+	function handleInput() {
+		syncScroll();
+		const pos = textareaEl?.selectionStart ?? 0;
+		cursorPos = pos;
+		const detected = detectMention(text, pos);
+
+		if (!detected) { resetMention(); return; }
+		if (detected.query === mentionQuery && detected.start === mentionStart) return;
+
+		mentionStart = detected.start;
+		mentionQuery = detected.query;
+		mentionFocusIdx = -1;
+
+		if (mentionDebounceTimer) clearTimeout(mentionDebounceTimer);
+
+		if (!detected.query.length) {
+			mentionActors = [];
+			mentionLoading = false;
+			return;
+		}
+
+		mentionLoading = true;
+		mentionDebounceTimer = setTimeout(async () => {
+			const q = detected.query;
+			try {
+				const agent = await createAgent();
+				const res = await agent.api.app.bsky.actor.searchActorsTypeahead({ q, limit: 8 });
+				if (mentionQuery === q) { mentionActors = res.data.actors; mentionLoading = false; }
+			} catch {
+				if (mentionQuery === q) { mentionActors = []; mentionLoading = false; }
+			}
+		}, 300);
+	}
+
+	function handleMentionSelect(actor: AppBskyActorDefs.ProfileViewBasic) {
+		if (mentionQuery === null) return;
+		const insertion = `@${actor.handle} `;
+		text = text.slice(0, mentionStart) + insertion + text.slice(mentionStart + 1 + mentionQuery.length);
+		const newPos = mentionStart + insertion.length;
+		resetMention();
+		requestAnimationFrame(() => {
+			textareaEl?.focus();
+			textareaEl?.setSelectionRange(newPos, newPos);
+			cursorPos = newPos;
+			syncScroll();
+		});
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.ctrlKey && e.key === 'Enter' && canPost) { handlePost(); return; }
+		if (mentionActors.length > 0 || mentionLoading) {
+			if (e.key === 'ArrowDown') { e.preventDefault(); mentionFocusIdx = Math.min(mentionFocusIdx + 1, mentionActors.length - 1); return; }
+			if (e.key === 'ArrowUp') { e.preventDefault(); mentionFocusIdx = Math.max(mentionFocusIdx - 1, -1); return; }
+			if ((e.key === 'Enter' || e.key === 'Tab') && mentionFocusIdx >= 0) { e.preventDefault(); handleMentionSelect(mentionActors[mentionFocusIdx]); return; }
+			if (e.key === 'Escape') { e.preventDefault(); resetMention(); return; }
+		}
+	}
+
+	const showMentionSuggestions = $derived(
+		mentionQuery !== null && mentionQuery.length > 0 && (mentionLoading || mentionActors.length > 0)
+	);
+
+	$effect(() => {
+		if (!showMentionSuggestions) return;
+		function handleOutside(e: PointerEvent) {
+			if (!(e.target as Element).closest('[data-mention-suggestions]') && e.target !== textareaEl) {
+				resetMention();
+			}
+		}
+		window.addEventListener('pointerdown', handleOutside, true);
+		return () => window.removeEventListener('pointerdown', handleOutside, true);
+	});
 
 	function syncScroll() {
 		if (highlightDiv && textareaEl) {
@@ -256,6 +353,7 @@
 			ogpLoading = false;
 			ogpDismissed = false;
 			ogpCurrentUrl = null;
+			resetMention();
 			clearComposeText();
 			showToast('投稿しました', 'success');
 		} catch (e) {
@@ -361,7 +459,7 @@
 			<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0 overflow-hidden">
 				{#if getSession()?.handle}
 					<img
-						src={myAvatar}
+						src={avatarThumbnail(myAvatar)}
 						alt="アバター"
 						class="w-full h-full object-cover"
 						onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -380,9 +478,9 @@
 					onscroll={syncScroll}
 					placeholder={replyContext ? '返信する...' : quoteContext ? '引用コメントを入力...' : 'いまなにしてる？'}
 					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent p-0"
-					oninput={syncScroll}
+					oninput={handleInput}
 					onblur={() => { cursorPos = textareaEl?.selectionStart ?? cursorPos; }}
-					onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter' && canPost) handlePost(); }}
+					onkeydown={handleKeydown}
 				></textarea>
 			</div>
 		</div>
@@ -440,6 +538,15 @@
 			ogp={ogpData}
 			loading={ogpLoading}
 			onDismiss={() => { ogpDismissed = true; }}
+		/>
+	{/if}
+
+	{#if showMentionSuggestions}
+		<MentionSuggestions
+			actors={mentionActors}
+			loading={mentionLoading}
+			focusIndex={mentionFocusIdx}
+			onSelect={handleMentionSelect}
 		/>
 	{/if}
 
