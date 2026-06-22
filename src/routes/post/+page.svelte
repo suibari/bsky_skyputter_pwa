@@ -407,8 +407,7 @@
 		}
 	}
 
-	function handleMediaFileChange(e: Event) {
-		const files = Array.from((e.target as HTMLInputElement).files ?? []);
+	function addMediaFiles(files: File[]) {
 		let hasConflict = false;
 
 		for (const file of files) {
@@ -435,8 +434,22 @@
 		if (hasConflict) {
 			showToast(t.post.toast.mediaConflict, 'error');
 		}
+	}
 
+	function handleMediaFileChange(e: Event) {
+		const files = Array.from((e.target as HTMLInputElement).files ?? []);
+		addMediaFiles(files);
 		mediaFileInput.value = '';
+	}
+
+	function handlePaste(e: ClipboardEvent) {
+		const files = Array.from(e.clipboardData?.items ?? [])
+			.filter((it) => it.kind === 'file' && it.type.startsWith('image/'))
+			.map((it) => it.getAsFile())
+			.filter((f): f is File => f !== null);
+		if (files.length === 0) return;
+		e.preventDefault();
+		addMediaFiles(files);
 	}
 </script>
 
@@ -501,6 +514,7 @@
 					oninput={handleInput}
 					onblur={() => { cursorPos = textareaEl?.selectionStart ?? cursorPos; }}
 					onkeydown={handleKeydown}
+					onpaste={handlePaste}
 				></textarea>
 			</div>
 		</div>
