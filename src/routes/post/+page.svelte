@@ -497,7 +497,7 @@
 					bind:this={textareaEl}
 					onscroll={syncScroll}
 					placeholder={replyContext ? t.post.replyPlaceholder : quoteContext ? t.post.quotePlaceholder : t.post.placeholder}
-					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent p-0 scrollbar-gutter-stable"
+					class="absolute inset-0 w-full h-full resize-none text-base text-transparent caret-gray-900 dark:caret-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none leading-relaxed bg-transparent p-0 scrollbar-gutter-stable scrollbar-none wrap-break-word overflow-x-hidden"
 					oninput={handleInput}
 					onblur={() => { cursorPos = textareaEl?.selectionStart ?? cursorPos; }}
 					onkeydown={handleKeydown}
