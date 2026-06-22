@@ -1,5 +1,6 @@
 let unreadCount = $state(0);
 let notificationsTapCount = $state(0);
+let notificationsPushCount = $state(0);
 
 export function getUnreadCount(): number {
 	return unreadCount;
@@ -15,4 +16,12 @@ export function getNotificationsTapCount(): number {
 
 export function triggerNotificationsTap(): void {
 	notificationsTapCount++;
+}
+
+export function getNotificationsPushCount(): number {
+	return notificationsPushCount;
+}
+
+export function triggerNotificationsPush(): void {
+	notificationsPushCount++;
 }

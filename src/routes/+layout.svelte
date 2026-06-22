@@ -5,7 +5,7 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import { isAuthenticated } from '$lib/stores/auth.svelte';
-	import { setUnreadCount, triggerNotificationsTap } from '$lib/stores/notifications.svelte';
+	import { setUnreadCount, triggerNotificationsPush } from '$lib/stores/notifications.svelte';
 	import { getUnreadCount, markSeen } from '$lib/api/notifications';
 	import { loadTheme } from '$lib/stores/theme.svelte';
 	import { loadLanguage } from '$lib/stores/language.svelte';
@@ -45,7 +45,7 @@
 				if ($page.url.pathname === '/notifications') {
 					try { await markSeen(); } catch {}
 					setUnreadCount(0);
-					triggerNotificationsTap();
+					triggerNotificationsPush();
 				} else {
 					refreshCount();
 				}
