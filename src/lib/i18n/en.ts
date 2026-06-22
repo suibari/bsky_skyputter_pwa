@@ -91,6 +91,7 @@ export const en: Translation = {
 			quote: 'quoted your post',
 			subscribedPost: 'posted'
 		},
+		others: (n: number) => `and ${n} other${n > 1 ? 's' : ''}`,
 		ariaExpand: 'Expand',
 		ariaCollapse: 'Collapse',
 		ariaZoomImage: 'View image',

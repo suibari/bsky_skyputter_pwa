@@ -97,6 +97,7 @@ export interface Translation {
 			quote: string;
 			subscribedPost: string;
 		};
+		others: (n: number) => string;
 		ariaExpand: string;
 		ariaCollapse: string;
 		ariaZoomImage: string;

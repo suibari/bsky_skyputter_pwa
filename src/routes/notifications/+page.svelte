@@ -28,6 +28,27 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 
 	const THREAD_REASONS = ['reply', 'mention', 'quote', 'subscribed-post'];
 
+	type Group = { key: string; reason: string; members: Notification[] };
+
+	// like/repost は対象ポスト単位、follow は対象なしでまとめる。非対象 reason は null（=単独）。
+	function groupKey(n: Notification): string | null {
+		if (n.reason === 'follow') return 'follow';
+		if (n.reason === 'like' || n.reason === 'repost') return `${n.reason}::${n.reasonSubject ?? ''}`;
+		return null;
+	}
+
+	// 時系列順を保ったまま、リスト上で連続する同一キーの通知だけを隣接グループ化する。
+	const groups = $derived.by(() => {
+		const out: Group[] = [];
+		for (const n of notifications) {
+			const key = groupKey(n);
+			const last = out.at(-1);
+			if (key && last && last.key === key) last.members.push(n);
+			else out.push({ key: key ?? n.uri, reason: n.reason, members: [n] });
+		}
+		return out;
+	});
+
 	const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	function didFromUri(uri: string): string | undefined {
@@ -434,9 +455,11 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 	{:else if notifications.length === 0}
 		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">{t.notifications.empty}</p>
 	{:else}
-		{#each notifications as notification (notification.uri)}
+		{#each groups as g (g.members[0].uri)}
+			{@const notification = g.members[0]}
 			<NotificationItem
 				{notification}
+				members={g.members}
 				subjectPost={subjectPostMap.get(notification.reasonSubject ?? '')}
 				notifPost={subjectPostMap.get(notification.uri)}
 				threadTexts={THREAD_REASONS.includes(notification.reason) ? getThreadTexts(notification.uri) : undefined}

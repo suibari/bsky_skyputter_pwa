@@ -91,6 +91,7 @@ export const ja: Translation = {
 			quote: 'を引用しました',
 			subscribedPost: '投稿しました'
 		},
+		others: (n: number) => `他${n}人`,
 		ariaExpand: '展開する',
 		ariaCollapse: '折りたたむ',
 		ariaZoomImage: '画像を拡大',
