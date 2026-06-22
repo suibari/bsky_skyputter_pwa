@@ -84,7 +84,9 @@ export const ja: Translation = {
 	notificationItem: {
 		reasons: {
 			like: 'いいねしました',
+			likeViaRepost: 'あなたのリポストにいいねしました',
 			repost: 'リポストしました',
+			repostViaRepost: 'あなたのリポストをリポストしました',
 			follow: 'フォローしました',
 			mention: 'にメンションしました',
 			reply: '返信しました',

@@ -90,7 +90,9 @@ export interface Translation {
 	notificationItem: {
 		reasons: {
 			like: string;
+			likeViaRepost: string;
 			repost: string;
+			repostViaRepost: string;
 			follow: string;
 			mention: string;
 			reply: string;

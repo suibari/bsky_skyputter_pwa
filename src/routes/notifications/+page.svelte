@@ -33,7 +33,7 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 	// like/repost は対象ポスト単位、follow は対象なしでまとめる。非対象 reason は null（=単独）。
 	function groupKey(n: Notification): string | null {
 		if (n.reason === 'follow') return 'follow';
-		if (n.reason === 'like' || n.reason === 'repost') return `${n.reason}::${n.reasonSubject ?? ''}`;
+		if (['like', 'repost', 'like-via-repost', 'repost-via-repost'].includes(n.reason)) return `${n.reason}::${n.reasonSubject ?? ''}`;
 		return null;
 	}
 
@@ -191,7 +191,7 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 	async function fetchSubjectPosts(newNotifications: Notification[]) {
 		// like/repost/quote の subject ポスト（自分の既存投稿）を AppView から取得
 		const subjectUris = newNotifications
-			.filter((n) => ['like', 'repost', 'quote', 'reply'].includes(n.reason) && n.reasonSubject)
+			.filter((n) => ['like', 'repost', 'like-via-repost', 'repost-via-repost', 'quote', 'reply'].includes(n.reason) && n.reasonSubject)
 			.map((n) => n.reasonSubject as string)
 			.filter((uri) => !subjectPostMap.has(uri));
 

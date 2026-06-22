@@ -84,7 +84,9 @@ export const en: Translation = {
 	notificationItem: {
 		reasons: {
 			like: 'liked your post',
+			likeViaRepost: 'liked your repost',
 			repost: 'reposted your post',
+			repostViaRepost: 'reposted your repost',
 			follow: 'followed you',
 			mention: 'mentioned you',
 			reply: 'replied to you',

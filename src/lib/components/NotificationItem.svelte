@@ -54,7 +54,9 @@
 
 	const reasonIcons: Record<string, { color: string; icon: string }> = {
 		like: { color: '#ef4444', icon: 'heart' },
+		'like-via-repost': { color: '#ef4444', icon: 'heart' },
 		repost: { color: '#22c55e', icon: 'repost' },
+		'repost-via-repost': { color: '#22c55e', icon: 'repost' },
 		follow: { color: '#0085ff', icon: 'follow' },
 		mention: { color: '#8b5cf6', icon: 'at' },
 		reply: { color: '#0085ff', icon: 'reply' },
@@ -64,7 +66,9 @@
 
 	const reasonLabels = $derived<Record<string, string>>({
 		like: t.notificationItem.reasons.like,
+		'like-via-repost': t.notificationItem.reasons.likeViaRepost,
 		repost: t.notificationItem.reasons.repost,
+		'repost-via-repost': t.notificationItem.reasons.repostViaRepost,
 		follow: t.notificationItem.reasons.follow,
 		mention: t.notificationItem.reasons.mention,
 		reply: t.notificationItem.reasons.reply,
