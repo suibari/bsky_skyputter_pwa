@@ -54,15 +54,16 @@
 		document.addEventListener('visibilitychange', onVisibility);
 
 		const onSwMessage = async (event: MessageEvent) => {
-			if (event.data?.type === 'NEW_NOTIFICATION') {
-				if ($page.url.pathname === '/notifications') {
-					try { await markSeen(); } catch {}
-					setUnreadCount(0);
-					triggerNotificationsPush();
-					clearDeviceNotifications();
-				} else {
-					refreshCount();
-				}
+			if (event.data?.type !== 'NEW_NOTIFICATION') return;
+			// アクティブ（フォーカスあり）かつ通知画面のときだけ抑制する。
+			// 非アクティブ時は OS 通知を残し、バッジだけ更新する。
+			if (document.hasFocus() && $page.url.pathname === '/notifications') {
+				try { await markSeen(); } catch {}
+				setUnreadCount(0);
+				triggerNotificationsPush();
+				clearDeviceNotifications();
+			} else {
+				refreshCount();
 			}
 		};
 		navigator.serviceWorker.addEventListener('message', onSwMessage);

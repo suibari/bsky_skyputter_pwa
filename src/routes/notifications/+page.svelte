@@ -424,7 +424,8 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 		untrack(() => {
 			markSeen().catch(() => {});
 			setUnreadCount(0);
-			refreshFirstPage([]);
+			initialLoaded = false;
+			refreshFirstPage([]).finally(() => { initialLoaded = true; });
 		});
 	});
 
