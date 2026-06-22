@@ -55,6 +55,15 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 		return uri.match(/^at:\/\/(did:[^/]+)/)?.[1];
 	}
 
+	// 表示すべき元ポストの URI。like-via-repost / repost-via-repost は reasonSubject が
+	// リポストレコードを指すため、like/repost レコードの subject.uri（元ポスト）を使う。
+	function subjectPostUri(n: Notification): string | undefined {
+		if (n.reason === 'like-via-repost' || n.reason === 'repost-via-repost') {
+			return (n.record as { subject?: { uri?: string } } | undefined)?.subject?.uri;
+		}
+		return n.reasonSubject;
+	}
+
 	function buildEmbedView(rawEmbed: unknown, authorDid: string): unknown {
 		if (!rawEmbed || typeof rawEmbed !== 'object') return undefined;
 		const embed = rawEmbed as Record<string, unknown>;
@@ -191,9 +200,9 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 	async function fetchSubjectPosts(newNotifications: Notification[]) {
 		// like/repost/quote の subject ポスト（自分の既存投稿）を AppView から取得
 		const subjectUris = newNotifications
-			.filter((n) => ['like', 'repost', 'like-via-repost', 'repost-via-repost', 'quote', 'reply'].includes(n.reason) && n.reasonSubject)
-			.map((n) => n.reasonSubject as string)
-			.filter((uri) => !subjectPostMap.has(uri));
+			.filter((n) => ['like', 'repost', 'like-via-repost', 'repost-via-repost', 'quote', 'reply'].includes(n.reason))
+			.map((n) => subjectPostUri(n))
+			.filter((uri): uri is string => !!uri && !subjectPostMap.has(uri));
 
 		// reply/mention/quote/subscribed-post の通知投稿本体を PDS から直接取得（AppView遅延を回避）
 		const notifUris = newNotifications
@@ -460,7 +469,7 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 			<NotificationItem
 				{notification}
 				members={g.members}
-				subjectPost={subjectPostMap.get(notification.reasonSubject ?? '')}
+				subjectPost={subjectPostMap.get(subjectPostUri(notification) ?? '')}
 				notifPost={subjectPostMap.get(notification.uri)}
 				threadTexts={THREAD_REASONS.includes(notification.reason) ? getThreadTexts(notification.uri) : undefined}
 				liked={likedUris.has(notification.uri)}
