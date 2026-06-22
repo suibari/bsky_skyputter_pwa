@@ -33,10 +33,23 @@
 			}
 		};
 
+		// 溜まったデバイス通知を全クローズし、SW 側の集約カウンタもリセットする。
+		// 端末通知を閉じるだけで、自動リロード（postMessage）には影響しない。
+		const clearDeviceNotifications = () => {
+			if (!('serviceWorker' in navigator)) return;
+			navigator.serviceWorker.ready
+				.then((reg) => reg.getNotifications())
+				.then((ns) => ns.forEach((n) => n.close()))
+				.catch(() => {});
+		};
+
 		await refreshCount();
 
 		const onVisibility = () => {
-			if (document.visibilityState === 'visible') refreshCount();
+			if (document.visibilityState === 'visible') {
+				refreshCount();
+				clearDeviceNotifications();
+			}
 		};
 		document.addEventListener('visibilitychange', onVisibility);
 
@@ -46,6 +59,7 @@
 					try { await markSeen(); } catch {}
 					setUnreadCount(0);
 					triggerNotificationsPush();
+					clearDeviceNotifications();
 				} else {
 					refreshCount();
 				}
