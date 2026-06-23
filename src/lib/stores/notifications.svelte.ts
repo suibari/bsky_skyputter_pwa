@@ -1,6 +1,7 @@
 let unreadCount = $state(0);
 let notificationsTapCount = $state(0);
 let notificationsPushCount = $state(0);
+let notificationsPushShouldMarkSeen = $state(false);
 
 export function getUnreadCount(): number {
 	return unreadCount;
@@ -22,6 +23,11 @@ export function getNotificationsPushCount(): number {
 	return notificationsPushCount;
 }
 
-export function triggerNotificationsPush(): void {
+export function shouldMarkSeenOnNotificationsPush(): boolean {
+	return notificationsPushShouldMarkSeen;
+}
+
+export function triggerNotificationsPush(shouldMarkSeen = false): void {
+	notificationsPushShouldMarkSeen = shouldMarkSeen;
 	notificationsPushCount++;
 }
