@@ -14,7 +14,7 @@
 
 	const showNav = $derived(isAuthenticated() && $page.url.pathname !== '/login');
 
-	onMount(async () => {
+	onMount(() => {
 		loadTheme();
 		loadLanguage();
 
@@ -43,7 +43,7 @@
 				.catch(() => {});
 		};
 
-		await refreshCount();
+		void refreshCount();
 
 		const onVisibility = () => {
 			if (document.visibilityState === 'visible') {
@@ -55,15 +55,19 @@
 
 		const onSwMessage = async (event: MessageEvent) => {
 			if (event.data?.type !== 'NEW_NOTIFICATION') return;
-			// アクティブ（フォーカスあり）かつ通知画面のときだけ抑制する。
-			// 非アクティブ時は OS 通知を残し、バッジだけ更新する。
-			if (document.hasFocus() && $page.url.pathname === '/notifications') {
-				try { await markSeen(); } catch {}
-				setUnreadCount(0);
-				triggerNotificationsPush();
-				clearDeviceNotifications();
+			const isNotificationsPage = $page.url.pathname === '/notifications';
+			const shouldMarkSeen = document.hasFocus() && isNotificationsPage;
+			if (isNotificationsPage) {
+				if (shouldMarkSeen) {
+					try { await markSeen(); } catch {}
+					setUnreadCount(0);
+					clearDeviceNotifications();
+				} else {
+					void refreshCount();
+				}
+				triggerNotificationsPush(shouldMarkSeen);
 			} else {
-				refreshCount();
+				void refreshCount();
 			}
 		};
 		navigator.serviceWorker.addEventListener('message', onSwMessage);

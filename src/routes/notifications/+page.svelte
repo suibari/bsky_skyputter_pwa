@@ -5,7 +5,12 @@
 	import NotificationItem from '$lib/components/NotificationItem.svelte';
 	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
-import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } from '$lib/stores/notifications.svelte';
+	import {
+		setUnreadCount,
+		getNotificationsTapCount,
+		getNotificationsPushCount,
+		shouldMarkSeenOnNotificationsPush
+	} from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getT } from '$lib/stores/language.svelte';
 	import { createAgent } from '$lib/api/agent';
@@ -433,9 +438,12 @@ import { setUnreadCount, getNotificationsTapCount, getNotificationsPushCount } f
 	$effect(() => {
 		const count = getNotificationsPushCount();
 		if (count === 0) return;
+		const shouldMarkSeen = shouldMarkSeenOnNotificationsPush();
 		untrack(() => {
-			markSeen().catch(() => {});
-			setUnreadCount(0);
+			if (shouldMarkSeen) {
+				markSeen().catch(() => {});
+				setUnreadCount(0);
+			}
 			refreshFirstPage([600, 1000, 1500, 2500, 3500]);
 		});
 	});
