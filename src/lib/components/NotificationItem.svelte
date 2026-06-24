@@ -80,6 +80,12 @@
 	const iconInfo = $derived(reasonIcons[notification.reason] ?? { color: '#6b7280', icon: 'bell' });
 	const record = $derived(notification.record as { text?: string } | undefined);
 	const canInteract = $derived(['reply', 'mention', 'quote', 'subscribed-post'].includes(notification.reason));
+	const isHighlightText = $derived(['reply', 'mention', 'quote'].includes(notification.reason));
+	const textClass = $derived(
+		isHighlightText
+			? 'text-gray-900 dark:text-white font-medium text-sm leading-relaxed'
+			: 'text-gray-500 dark:text-gray-400 text-xs'
+	);
 	const subjectRecord = $derived(subjectPost?.record as { text?: string } | undefined);
 	// threadTexts がある場合はそちらを優先、ない場合は like/repost の subject テキスト
 	const displayText = $derived(
@@ -184,11 +190,11 @@
 				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
 			>
 				{#if threadTexts.length === 1}
-					<p class="text-xs text-gray-500 dark:text-gray-400 {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
+					<p class="{textClass} {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
 				{:else}
 					<div class="space-y-0.5">
 						{#each threadTexts as text, i}
-							<p class="text-xs text-gray-500 dark:text-gray-400 {expanded ? '' : 'line-clamp-2'}">{text}</p>
+							<p class="{textClass} {expanded ? '' : 'line-clamp-2'}">{text}</p>
 							{#if i < threadTexts.length - 1}
 								<div class="w-px h-2 bg-gray-300 dark:bg-gray-600 ml-1"></div>
 							{/if}
@@ -203,7 +209,7 @@
 				onclick={() => (expanded = !expanded)}
 				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
 			>
-				<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
+				<p class="{textClass} mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
 				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
 			</button>
 		{/if}
