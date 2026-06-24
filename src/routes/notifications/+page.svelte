@@ -30,6 +30,8 @@
 	let likedUris = $state<Set<string>>(new Set());
 	let replyMap = $state<Map<string, string[]>>(new Map());
 	let refreshGen = 0;
+	let lastTapCount: number | undefined;
+	let lastPushCount: number | undefined;
 
 	const THREAD_REASONS = ['reply', 'mention', 'quote', 'subscribed-post'];
 
@@ -425,19 +427,28 @@
 	// 手動タップ（通知タブ）: 即時1回リフレッシュ（リトライ無し）
 	$effect(() => {
 		const count = getNotificationsTapCount();
-		if (count === 0) return;
+		if (lastTapCount === undefined) {
+			lastTapCount = count;
+			return;
+		}
+		if (count === lastTapCount) return;
+		lastTapCount = count;
 		untrack(() => {
 			markSeen().catch(() => {});
 			setUnreadCount(0);
-			initialLoaded = false;
-			refreshFirstPage([]).finally(() => { initialLoaded = true; });
+			refreshFirstPage([]);
 		});
 	});
 
 	// Push 起因: AppView に新着が反映されるまで短い間隔でリトライ
 	$effect(() => {
 		const count = getNotificationsPushCount();
-		if (count === 0) return;
+		if (lastPushCount === undefined) {
+			lastPushCount = count;
+			return;
+		}
+		if (count === lastPushCount) return;
+		lastPushCount = count;
 		const shouldMarkSeen = shouldMarkSeenOnNotificationsPush();
 		untrack(() => {
 			if (shouldMarkSeen) {
