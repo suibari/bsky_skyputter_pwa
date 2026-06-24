@@ -9,7 +9,8 @@
 		setUnreadCount,
 		getNotificationsTapCount,
 		getNotificationsPushCount,
-		shouldMarkSeenOnNotificationsPush
+		shouldMarkSeenOnNotificationsPush,
+		setNotificationsRefreshing
 	} from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getT } from '$lib/stores/language.svelte';
@@ -375,7 +376,9 @@
 	async function refreshFirstPage(retryDelays: number[]): Promise<void> {
 		const gen = ++refreshGen;
 		const prevNewestUri = notifications[0]?.uri;
+		const prevNotifications = notifications;
 		loading = true;
+		setNotificationsRefreshing(true);
 		try {
 			for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
 				if (gen !== refreshGen) return; // 後続トリガーに置き換えられた
@@ -393,16 +396,20 @@
 				if (hasNew || attempt === retryDelays.length) {
 					await fetchSubjectPosts(data.notifications);
 					if (gen !== refreshGen) return;
+					const shouldKeepPrevious = prevNotifications.length > 0 && data.notifications.length === 0;
 					cursor = data.cursor;
 					hasMore = !!data.cursor;
-					notifications = data.notifications;
+					notifications = shouldKeepPrevious ? prevNotifications : data.notifications;
 					initialLoaded = true;
 					return;
 				}
 				await delay(retryDelays[attempt]);
 			}
 		} finally {
-			if (gen === refreshGen) loading = false;
+			if (gen === refreshGen) {
+				loading = false;
+				setNotificationsRefreshing(false);
+			}
 		}
 	}
 
