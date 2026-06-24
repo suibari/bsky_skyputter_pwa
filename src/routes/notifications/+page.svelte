@@ -485,13 +485,7 @@
 		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">{t.notifications.header}</h1>
 	</header>
 
-	{#if getNotificationsRefreshing()}
-		<div class="fixed inset-0 flex items-center justify-center pointer-events-none z-20">
-			<LoadingSpinner size={32} />
-		</div>
-	{/if}
-
-	{#if !initialLoaded}
+	{#if !initialLoaded || getNotificationsRefreshing()}
 		<div class="flex justify-center py-12">
 			<LoadingSpinner />
 		</div>
