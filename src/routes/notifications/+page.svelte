@@ -10,7 +10,8 @@
 		getNotificationsTapCount,
 		getNotificationsPushCount,
 		shouldMarkSeenOnNotificationsPush,
-		setNotificationsRefreshing
+		setNotificationsRefreshing,
+		getNotificationsRefreshing
 	} from '$lib/stores/notifications.svelte';
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getT } from '$lib/stores/language.svelte';
@@ -483,6 +484,12 @@
 	<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
 		<h1 class="text-base font-semibold text-gray-900 dark:text-gray-50">{t.notifications.header}</h1>
 	</header>
+
+	{#if getNotificationsRefreshing()}
+		<div class="fixed inset-0 flex items-center justify-center pointer-events-none z-20">
+			<LoadingSpinner size={32} />
+		</div>
+	{/if}
 
 	{#if !initialLoaded}
 		<div class="flex justify-center py-12">
