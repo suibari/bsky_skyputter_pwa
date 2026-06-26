@@ -415,11 +415,19 @@
 	}
 
 	async function handleLike(uri: string, cid: string) {
+		if (likedUris.has(uri)) return;
+
+		// 楽観的UI更新
+		likedUris = new Set([...likedUris, uri]);
+
 		try {
 			await createLike(uri, cid);
-			likedUris = new Set([...likedUris, uri]);
 			showToast(t.notifications.toast.liked, 'success');
 		} catch (e) {
+			// エラー時は元に戻す
+			const nextLiked = new Set(likedUris);
+			nextLiked.delete(uri);
+			likedUris = nextLiked;
 			showToast(e instanceof Error ? e.message : t.notifications.toast.likeFailed, 'error');
 		}
 	}
