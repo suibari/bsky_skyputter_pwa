@@ -10,11 +10,13 @@
 
 	let {
 		feedViewPost,
+		parentPost,
 		onDelete,
 		onReply,
 		onQuote
 	}: {
 		feedViewPost: AppBskyFeedDefs.FeedViewPost;
+		parentPost?: AppBskyFeedDefs.PostView;
 		onDelete?: (uri: string) => void;
 		onReply?: (uri: string, cid: string) => void;
 		onQuote?: (uri: string, cid: string) => void;
@@ -220,6 +222,24 @@
 				</div>
 				{#if quoted.text}
 					<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">{quoted.text}</p>
+				{/if}
+			</div>
+		{/if}
+
+		{#if parentPost}
+			{@const parentRec = parentPost.record as { text?: string } | undefined}
+			<div class="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+				<div class="flex items-center gap-1.5 mb-1">
+					{#if parentPost.author.avatar}
+						<img src={avatarThumbnail(parentPost.author.avatar)} alt={parentPost.author.handle} class="w-4 h-4 rounded-full object-cover shrink-0" />
+					{/if}
+					<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">
+						{parentPost.author.displayName || parentPost.author.handle}
+					</span>
+					<span class="text-xs text-gray-400 dark:text-gray-500 shrink-0">@{parentPost.author.handle}</span>
+				</div>
+				{#if parentRec?.text}
+					<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">{parentRec.text}</p>
 				{/if}
 			</div>
 		{/if}

@@ -134,6 +134,16 @@
 	}
 
 	let expanded = $state(false);
+	let contentEl = $state<HTMLElement | null>(null);
+	let isClamped = $state(false);
+
+	$effect(() => {
+		if (!contentEl || expanded) return;
+		isClamped = [...contentEl.querySelectorAll('p')].some(
+			(p) => p.scrollHeight > p.clientHeight
+		);
+	});
+
 	let viewerOpen = $state(false);
 	let viewerIndex = $state(0);
 	let videoViewerOpen = $state(false);
@@ -185,11 +195,7 @@
 
 {#snippet contentBody()}
 	{#if threadTexts && threadTexts.length > 0}
-			<button
-				class="text-left w-full mt-0.5"
-				onclick={() => (expanded = !expanded)}
-				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
-			>
+			<div bind:this={contentEl} class="mt-0.5">
 				{#if threadTexts.length === 1}
 					<p class="{textClass} {expanded ? '' : 'line-clamp-3'}">
 						{#each parseTextSegments(threadTexts[0]) as seg}
@@ -220,14 +226,18 @@
 						{/each}
 					</div>
 				{/if}
-				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
-			</button>
+			</div>
+			{#if isClamped || expanded}
+				<button
+					class="text-xs text-gray-400 dark:text-gray-500 mt-0.5"
+					onclick={() => (expanded = !expanded)}
+					aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
+				>
+					{expanded ? '▲' : '▼'}
+				</button>
+			{/if}
 		{:else if displayText}
-			<button
-				class="text-left w-full"
-				onclick={() => (expanded = !expanded)}
-				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
-			>
+			<div bind:this={contentEl}>
 				<p class="{textClass} mt-0.5 {expanded ? '' : 'line-clamp-2'}">
 					{#each parseTextSegments(displayText) as seg}
 						{#if seg.type === 'link'}
@@ -238,8 +248,16 @@
 						{/if}
 					{/each}
 				</p>
-				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
-			</button>
+			</div>
+			{#if isClamped || expanded}
+				<button
+					class="text-xs text-gray-400 dark:text-gray-500"
+					onclick={() => (expanded = !expanded)}
+					aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
+				>
+					{expanded ? '▲' : '▼'}
+				</button>
+			{/if}
 		{/if}
 
 		{#if getImages(imagePost).length > 0}

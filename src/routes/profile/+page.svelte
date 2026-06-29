@@ -13,8 +13,9 @@
 	import { createAgent } from '$lib/api/agent';
 
 	const t = $derived(getT());
-	import { getAuthorFeed, deletePost } from '$lib/api/posts';
+	import { getAuthorFeedWithReplies, deletePost } from '$lib/api/posts';
 	import { parseTextSegments } from '$lib/richtext';
+	import ProfileThreadCard from '$lib/components/ProfileThreadCard.svelte';
 
 	const descSegments = $derived(profile?.description ? parseTextSegments(profile.description) : []);
 
@@ -25,7 +26,57 @@
 		return isRepostItem(f) ? `repost:${f.post.uri}` : f.post.uri;
 	}
 
+	type DisplayItem =
+		| { type: 'post'; item: AppBskyFeedDefs.FeedViewPost; parentPost?: AppBskyFeedDefs.PostView }
+		| { type: 'thread'; chain: AppBskyFeedDefs.FeedViewPost[]; parentPost?: AppBskyFeedDefs.PostView };
+
+	function getOtherAuthorParent(item: AppBskyFeedDefs.FeedViewPost): AppBskyFeedDefs.PostView | undefined {
+		const parent = item.reply?.parent;
+		if (!parent || !('author' in parent)) return undefined;
+		const pv = parent as AppBskyFeedDefs.PostView;
+		if (pv.author.did === item.post.author.did) return undefined;
+		return pv;
+	}
+
+	function groupFeedItems(feedItems: AppBskyFeedDefs.FeedViewPost[]): DisplayItem[] {
+		const uriToItem = new Map<string, AppBskyFeedDefs.FeedViewPost>();
+		for (const item of feedItems) uriToItem.set(item.post.uri, item);
+
+		const childMap = new Map<string, AppBskyFeedDefs.FeedViewPost>();
+		const childUris = new Set<string>();
+
+		for (const item of feedItems) {
+			const rec = item.post.record as { reply?: { parent?: { uri: string } } };
+			const parentUri = rec.reply?.parent?.uri;
+			if (!parentUri) continue;
+			const parentItem = uriToItem.get(parentUri);
+			if (parentItem && parentItem.post.author.did === item.post.author.did) {
+				childMap.set(parentUri, item);
+				childUris.add(item.post.uri);
+			}
+		}
+
+		const result: DisplayItem[] = [];
+		for (const item of feedItems) {
+			if (childUris.has(item.post.uri)) continue;
+			if (childMap.has(item.post.uri)) {
+				const chain: AppBskyFeedDefs.FeedViewPost[] = [item];
+				let cur = item;
+				while (childMap.has(cur.post.uri)) {
+					const child = childMap.get(cur.post.uri)!;
+					chain.push(child);
+					cur = child;
+				}
+				result.push({ type: 'thread', chain, parentPost: getOtherAuthorParent(chain[0]) });
+			} else {
+				result.push({ type: 'post', item, parentPost: getOtherAuthorParent(item) });
+			}
+		}
+		return result;
+	}
+
 	let posts = $state<AppBskyFeedDefs.FeedViewPost[]>([]);
+	const displayItems = $derived.by(() => groupFeedItems(posts));
 	let cursor = $state<string | undefined>(undefined);
 	let loading = $state(false);
 	let initialLoaded = $state(false);
@@ -52,7 +103,7 @@
 
 		loading = true;
 		try {
-			const data = await getAuthorFeed(session.did, cursor);
+			const data = await getAuthorFeedWithReplies(session.did, cursor);
 			posts = [...posts, ...data.feed];
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
@@ -148,13 +199,24 @@
 	{:else if posts.length === 0}
 		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">{t.profile.empty}</p>
 	{:else}
-		{#each posts as feedViewPost (feedItemKey(feedViewPost))}
-			<PostCard
-				{feedViewPost}
-				onDelete={isRepostItem(feedViewPost) ? undefined : (uri) => (deleteTarget = uri)}
-				onReply={handleReply}
-				onQuote={handleQuote}
-			/>
+		{#each displayItems as ditem (ditem.type === 'thread' ? ditem.chain[0].post.uri : feedItemKey(ditem.item))}
+			{#if ditem.type === 'thread'}
+				<ProfileThreadCard
+					chain={ditem.chain}
+					parentPost={ditem.parentPost}
+					onDelete={(uri) => (deleteTarget = uri)}
+					onReply={handleReply}
+					onQuote={handleQuote}
+				/>
+			{:else}
+				<PostCard
+					feedViewPost={ditem.item}
+					parentPost={ditem.parentPost}
+					onDelete={isRepostItem(ditem.item) ? undefined : (uri) => (deleteTarget = uri)}
+					onReply={handleReply}
+					onQuote={handleQuote}
+				/>
+			{/if}
 		{/each}
 		<InfiniteScroll {loading} {hasMore} onLoadMore={loadMore} />
 	{/if}

@@ -14,6 +14,17 @@ export async function getAuthorFeed(did: string, cursor?: string) {
 	return res.data;
 }
 
+export async function getAuthorFeedWithReplies(did: string, cursor?: string) {
+	const agent = await createAgent();
+	const res = await agent.api.app.bsky.feed.getAuthorFeed({
+		actor: did,
+		filter: 'posts_with_replies',
+		limit: 20,
+		cursor
+	});
+	return res.data;
+}
+
 export type PostImageEmbed = {
 	blob: BlobRef;
 	alt: string;
