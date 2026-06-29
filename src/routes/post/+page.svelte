@@ -47,6 +47,7 @@
 	let ogpDismissed = $state(false);
 	let ogpCurrentUrl: string | null = null; // $state にすると effect の依存に入りタイマーがキャンセルされるため通常変数
 	let ogpDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let ogpLocked = false; // trueの時はカード確定済み、URL変更を無視（×ボタンでのみ解除）
 
 	let highlightDiv = $state<HTMLDivElement | undefined>(undefined);
 	let textareaEl = $state<HTMLTextAreaElement | undefined>(undefined);
@@ -211,6 +212,9 @@
 		// URLがなくなってもカードは維持する（×ボタンでのみ消去）
 		if (!firstUrl) return;
 
+		// カード確定済みはURL変更を無視（×ボタンでのみ解除）
+		if (ogpLocked) return;
+
 		if (firstUrl === ogpCurrentUrl) return;
 
 		// New URL detected — reset dismissed flag and start debounce
@@ -225,6 +229,7 @@
 			if (ogpCurrentUrl === firstUrl) {
 				ogpData = result;
 				ogpLoading = false;
+				if (result !== null) ogpLocked = true;
 			}
 		}, 800);
 	});
@@ -373,6 +378,7 @@
 			ogpLoading = false;
 			ogpDismissed = false;
 			ogpCurrentUrl = null;
+			ogpLocked = false;
 			resetMention();
 			clearComposeText();
 			showToast(t.post.toast.posted, 'success');
@@ -571,7 +577,7 @@
 		<LinkCardPreview
 			ogp={ogpData}
 			loading={ogpLoading}
-			onDismiss={() => { ogpDismissed = true; }}
+			onDismiss={() => { ogpDismissed = true; ogpLocked = false; }}
 		/>
 	{/if}
 

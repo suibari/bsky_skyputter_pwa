@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { OgpData } from '$lib/api/ogp';
 	import { getT } from '$lib/stores/language.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
 	const t = $derived(getT());
 
@@ -28,7 +29,9 @@
 
 	{#if loading}
 		<div class="flex gap-3 p-3 pr-8">
-			<div class="w-16 h-16 bg-gray-200 rounded-lg animate-pulse shrink-0"></div>
+			<div class="w-16 h-16 bg-gray-200 rounded-lg animate-pulse shrink-0 relative flex items-center justify-center">
+				<LoadingSpinner size={20} class="text-gray-400" />
+			</div>
 			<div class="flex-1 space-y-2 py-1">
 				<div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
 				<div class="h-3 bg-gray-200 rounded animate-pulse w-full"></div>
