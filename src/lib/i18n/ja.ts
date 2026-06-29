@@ -233,7 +233,8 @@ export const ja: Translation = {
 		ariaQuote: '引用',
 		ariaDelete: '削除',
 		altAttachedImage: '添付画像',
-		altVideoThumbnail: '動画サムネイル'
+		altVideoThumbnail: '動画サムネイル',
+		youReposted: 'あなたがリポストしました'
 	},
 
 	infiniteScroll: {

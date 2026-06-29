@@ -89,6 +89,8 @@
 		try { return new URL(uri).hostname; } catch { return uri; }
 	}
 
+	const isRepost = !!(feedViewPost.reason as { $type?: string } | undefined)?.$type?.includes('Repost');
+
 	let viewerOpen = $state(false);
 	let viewerIndex = $state(0);
 	let videoViewerOpen = $state(false);
@@ -99,7 +101,16 @@
 	}
 </script>
 
-<article class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex gap-3">
+<article class="border-b border-gray-100 dark:border-gray-800">
+	{#if isRepost}
+		<div class="px-4 pt-2 flex items-center gap-1.5 text-xs text-[#22c55e]">
+			<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+				<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+			</svg>
+			<span>{t.postCard.youReposted}</span>
+		</div>
+	{/if}
+	<div class="px-4 py-3 flex gap-3">
 	<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0 overflow-hidden">
 		{#if author.avatar}
 			<img src={avatarThumbnail(author.avatar)} alt={author.handle} class="w-full h-full object-cover" />
@@ -256,6 +267,7 @@
 				</button>
 			{/if}
 		</div>
+	</div>
 	</div>
 </article>
 

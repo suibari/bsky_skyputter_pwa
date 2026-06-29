@@ -15,6 +15,13 @@
 	const t = $derived(getT());
 	import { getAuthorFeed, deletePost } from '$lib/api/posts';
 
+	function isRepostItem(f: AppBskyFeedDefs.FeedViewPost): boolean {
+		return !!(f.reason as { $type?: string } | undefined)?.$type?.includes('Repost');
+	}
+	function feedItemKey(f: AppBskyFeedDefs.FeedViewPost): string {
+		return isRepostItem(f) ? `repost:${f.post.uri}` : f.post.uri;
+	}
+
 	let posts = $state<AppBskyFeedDefs.FeedViewPost[]>([]);
 	let cursor = $state<string | undefined>(undefined);
 	let loading = $state(false);
@@ -43,10 +50,7 @@
 		loading = true;
 		try {
 			const data = await getAuthorFeed(session.did, cursor);
-			const nonReposts = data.feed.filter(
-				(f) => !(f.reason as { $type?: string } | undefined)?.$type?.includes('Repost')
-			);
-			posts = [...posts, ...nonReposts];
+			posts = [...posts, ...data.feed];
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
 		} catch (e) {
@@ -132,10 +136,10 @@
 	{:else if posts.length === 0}
 		<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">{t.profile.empty}</p>
 	{:else}
-		{#each posts as feedViewPost (feedViewPost.post.uri)}
+		{#each posts as feedViewPost (feedItemKey(feedViewPost))}
 			<PostCard
 				{feedViewPost}
-				onDelete={(uri) => (deleteTarget = uri)}
+				onDelete={isRepostItem(feedViewPost) ? undefined : (uri) => (deleteTarget = uri)}
 				onReply={handleReply}
 				onQuote={handleQuote}
 			/>

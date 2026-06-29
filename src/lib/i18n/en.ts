@@ -233,7 +233,8 @@ export const en: Translation = {
 		ariaQuote: 'Quote',
 		ariaDelete: 'Delete',
 		altAttachedImage: 'Attached image',
-		altVideoThumbnail: 'Video thumbnail'
+		altVideoThumbnail: 'Video thumbnail',
+		youReposted: 'You reposted'
 	},
 
 	infiniteScroll: {
