@@ -84,8 +84,8 @@
 	const isHighlightText = $derived(['reply', 'mention', 'quote'].includes(notification.reason));
 	const textClass = $derived(
 		isHighlightText
-			? 'text-gray-900 dark:text-white font-medium text-sm leading-relaxed'
-			: 'text-gray-500 dark:text-gray-400 text-xs'
+			? 'text-gray-900 dark:text-white font-medium text-sm leading-relaxed whitespace-pre-wrap'
+			: 'text-gray-500 dark:text-gray-400 text-xs whitespace-pre-wrap'
 	);
 	const subjectRecord = $derived(subjectPost?.record as { text?: string } | undefined);
 	// threadTexts がある場合はそちらを優先、ない場合は like/repost の subject テキスト

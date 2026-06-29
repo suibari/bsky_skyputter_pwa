@@ -88,7 +88,7 @@ export const ja: Translation = {
 			repost: 'リポストしました',
 			repostViaRepost: 'あなたのリポストをリポストしました',
 			follow: 'フォローしました',
-			mention: 'にメンションしました',
+			mention: 'メンションしました',
 			reply: '返信しました',
 			quote: 'を引用しました',
 			subscribedPost: '投稿しました'
