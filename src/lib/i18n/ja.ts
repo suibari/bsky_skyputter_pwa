@@ -137,6 +137,11 @@ export const ja: Translation = {
 			deleted: '削除しました',
 			deleteFailed: '削除に失敗しました',
 			loadFailed: '読み込みに失敗しました'
+		},
+		hashtagSearch: {
+			title: (tag: string) => `#${tag} の自分の投稿`,
+			empty: '一致する投稿はありません',
+			loadFailed: '検索に失敗しました'
 		}
 	},
 

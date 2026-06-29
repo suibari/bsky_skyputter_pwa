@@ -130,6 +130,17 @@ export async function createLike(uri: string, cid: string) {
 	return agent.like(uri, cid);
 }
 
+export async function searchPostsByHashtag(tag: string, authorHandle: string, cursor?: string) {
+	const agent = await createAgent();
+	const res = await agent.api.app.bsky.feed.searchPosts({
+		q: `#${tag}`,
+		author: authorHandle,
+		limit: 20,
+		cursor
+	});
+	return res.data;
+}
+
 export async function deletePost(uri: string) {
 	const parts = uri.replace('at://', '').split('/');
 	const did = parts[0];

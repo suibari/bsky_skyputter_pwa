@@ -13,13 +13,15 @@
 		parentPost,
 		onDelete,
 		onReply,
-		onQuote
+		onQuote,
+		onHashtag
 	}: {
 		feedViewPost: AppBskyFeedDefs.FeedViewPost;
 		parentPost?: AppBskyFeedDefs.PostView;
 		onDelete?: (uri: string) => void;
 		onReply?: (uri: string, cid: string) => void;
 		onQuote?: (uri: string, cid: string) => void;
+		onHashtag?: (tag: string) => void;
 	} = $props();
 
 	const post = feedViewPost.post;
@@ -137,6 +139,11 @@
 					{#if seg.type === 'link'}
 						<a href={seg.url} target="_blank" rel="noopener noreferrer"
 							class="text-[#0085ff] hover:underline break-all">{seg.text}</a>
+					{:else if seg.type === 'hashtag' && onHashtag}
+						<button
+							class="text-[#0085ff] hover:underline"
+							onclick={() => onHashtag(seg.tag)}
+						>{seg.text}</button>
 					{:else}
 						{seg.text}
 					{/if}

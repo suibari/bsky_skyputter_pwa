@@ -13,7 +13,7 @@
 	import { createAgent } from '$lib/api/agent';
 
 	const t = $derived(getT());
-	import { getAuthorFeedWithReplies, deletePost } from '$lib/api/posts';
+	import { getAuthorFeedWithReplies, deletePost, searchPostsByHashtag } from '$lib/api/posts';
 	import { parseTextSegments } from '$lib/richtext';
 	import ProfileThreadCard from '$lib/components/ProfileThreadCard.svelte';
 
@@ -128,6 +128,41 @@
 		}
 	}
 
+	let hashtagSearchTag = $state<string | null>(null);
+	let hashtagSearchPosts = $state<AppBskyFeedDefs.PostView[]>([]);
+	let hashtagSearchLoading = $state(false);
+	let hashtagSearchCursor = $state<string | undefined>(undefined);
+	let hashtagSearchHasMore = $state(true);
+
+	async function handleHashtag(tag: string) {
+		if (!profile) return;
+		hashtagSearchTag = tag;
+		hashtagSearchPosts = [];
+		hashtagSearchCursor = undefined;
+		hashtagSearchHasMore = true;
+		await loadHashtagSearch();
+	}
+
+	async function loadHashtagSearch() {
+		if (hashtagSearchLoading || !hashtagSearchTag || !profile) return;
+		hashtagSearchLoading = true;
+		try {
+			const data = await searchPostsByHashtag(hashtagSearchTag, profile.handle, hashtagSearchCursor);
+			hashtagSearchPosts = [...hashtagSearchPosts, ...data.posts];
+			hashtagSearchCursor = data.cursor;
+			hashtagSearchHasMore = !!data.cursor;
+		} catch (e) {
+			showToast(e instanceof Error ? e.message : t.profile.hashtagSearch.loadFailed, 'error');
+		} finally {
+			hashtagSearchLoading = false;
+		}
+	}
+
+	function closeHashtagSearch() {
+		hashtagSearchTag = null;
+		hashtagSearchPosts = [];
+	}
+
 	function handleReply(uri: string, cid: string) {
 		goto(`/post?replyTo=${encodeURIComponent(uri)}&replyCid=${encodeURIComponent(cid)}`);
 	}
@@ -215,6 +250,7 @@
 					onDelete={isRepostItem(ditem.item) ? undefined : (uri) => (deleteTarget = uri)}
 					onReply={handleReply}
 					onQuote={handleQuote}
+					onHashtag={handleHashtag}
 				/>
 			{/if}
 		{/each}
@@ -230,3 +266,38 @@
 	onConfirm={confirmDelete}
 	onCancel={() => (deleteTarget = null)}
 />
+
+{#if hashtagSearchTag}
+	<div class="fixed inset-0 z-30 flex justify-center">
+		<div class="w-full max-w-md flex flex-col bg-white dark:bg-gray-900">
+			<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3 bg-white dark:bg-gray-900">
+				<button
+					onclick={closeHashtagSearch}
+					class="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+					aria-label={t.common.close}
+				>
+					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+					</svg>
+				</button>
+				<h2 class="text-base font-semibold text-gray-900 dark:text-gray-50">
+					{t.profile.hashtagSearch.title(hashtagSearchTag)}
+				</h2>
+			</header>
+			<div class="flex-1 overflow-y-auto scrollbar-none pb-16">
+				{#if hashtagSearchLoading && hashtagSearchPosts.length === 0}
+					<div class="flex justify-center py-12"><LoadingSpinner /></div>
+				{:else if hashtagSearchPosts.length === 0}
+					<p class="text-center text-sm text-gray-400 dark:text-gray-500 py-12">
+						{t.profile.hashtagSearch.empty}
+					</p>
+				{:else}
+					{#each hashtagSearchPosts as post (post.uri)}
+						<PostCard feedViewPost={{ post }} />
+					{/each}
+					<InfiniteScroll loading={hashtagSearchLoading} hasMore={hashtagSearchHasMore} onLoadMore={loadHashtagSearch} />
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}

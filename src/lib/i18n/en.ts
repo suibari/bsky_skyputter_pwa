@@ -137,6 +137,11 @@ export const en: Translation = {
 			deleted: 'Deleted',
 			deleteFailed: 'Failed to delete',
 			loadFailed: 'Failed to load'
+		},
+		hashtagSearch: {
+			title: (tag: string) => `My posts with #${tag}`,
+			empty: 'No matching posts found',
+			loadFailed: 'Search failed'
 		}
 	},
 

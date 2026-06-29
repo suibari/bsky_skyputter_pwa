@@ -144,6 +144,11 @@ export interface Translation {
 			deleteFailed: string;
 			loadFailed: string;
 		};
+		hashtagSearch: {
+			title: (tag: string) => string;
+			empty: string;
+			loadFailed: string;
+		};
 	};
 
 	settings: {
