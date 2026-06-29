@@ -4,6 +4,7 @@
 	import VideoViewer from './VideoViewer.svelte';
 	import { avatarThumbnail } from '$lib/image';
 	import { getT } from '$lib/stores/language.svelte';
+	import { parseTextSegments } from '$lib/richtext';
 
 	const t = $derived(getT());
 
@@ -35,6 +36,7 @@
 	}
 
 	const timeAgo = $derived(calcTimeAgo(record.createdAt));
+	const textSegments = $derived(record.text ? parseTextSegments(record.text) : []);
 
 	type EmbedImage = { thumb: string; fullsize?: string; aspectRatio?: { width: number; height: number } };
 	type EmbedVideo = { playlist: string; thumbnail?: string; aspectRatio?: { width: number; height: number } };
@@ -129,7 +131,14 @@
 
 		{#if record.text}
 			<p class="text-sm text-gray-800 dark:text-gray-200 mt-1 leading-relaxed whitespace-pre-wrap wrap-break-word">
-				{record.text}
+				{#each textSegments as seg}
+					{#if seg.type === 'link'}
+						<a href={seg.url} target="_blank" rel="noopener noreferrer"
+							class="text-[#0085ff] hover:underline break-all">{seg.text}</a>
+					{:else}
+						{seg.text}
+					{/if}
+				{/each}
 			</p>
 		{/if}
 

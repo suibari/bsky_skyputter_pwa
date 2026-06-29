@@ -4,6 +4,7 @@
 	import VideoViewer from './VideoViewer.svelte';
 	import { avatarThumbnail } from '$lib/image';
 	import { getT } from '$lib/stores/language.svelte';
+	import { parseTextSegments } from '$lib/richtext';
 
 	const t = $derived(getT());
 
@@ -190,11 +191,29 @@
 				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
 			>
 				{#if threadTexts.length === 1}
-					<p class="{textClass} {expanded ? '' : 'line-clamp-3'}">{threadTexts[0]}</p>
+					<p class="{textClass} {expanded ? '' : 'line-clamp-3'}">
+						{#each parseTextSegments(threadTexts[0]) as seg}
+							{#if seg.type === 'link'}
+								<a href={seg.url} target="_blank" rel="noopener noreferrer"
+									class="text-[#0085ff] hover:underline break-all">{seg.text}</a>
+							{:else}
+								{seg.text}
+							{/if}
+						{/each}
+					</p>
 				{:else}
 					<div class="space-y-0.5">
 						{#each threadTexts as text, i}
-							<p class="{textClass} {expanded ? '' : 'line-clamp-2'}">{text}</p>
+							<p class="{textClass} {expanded ? '' : 'line-clamp-2'}">
+								{#each parseTextSegments(text) as seg}
+									{#if seg.type === 'link'}
+										<a href={seg.url} target="_blank" rel="noopener noreferrer"
+											class="text-[#0085ff] hover:underline break-all">{seg.text}</a>
+									{:else}
+										{seg.text}
+									{/if}
+								{/each}
+							</p>
 							{#if i < threadTexts.length - 1}
 								<div class="w-px h-2 bg-gray-300 dark:bg-gray-600 ml-1"></div>
 							{/if}
@@ -209,7 +228,16 @@
 				onclick={() => (expanded = !expanded)}
 				aria-label={expanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
 			>
-				<p class="{textClass} mt-0.5 {expanded ? '' : 'line-clamp-2'}">{displayText}</p>
+				<p class="{textClass} mt-0.5 {expanded ? '' : 'line-clamp-2'}">
+					{#each parseTextSegments(displayText) as seg}
+						{#if seg.type === 'link'}
+							<a href={seg.url} target="_blank" rel="noopener noreferrer"
+								class="text-[#0085ff] hover:underline break-all">{seg.text}</a>
+						{:else}
+							{seg.text}
+						{/if}
+					{/each}
+				</p>
 				<span class="text-xs text-gray-400 dark:text-gray-500">{expanded ? '▲' : '▼'}</span>
 			</button>
 		{/if}

@@ -14,6 +14,9 @@
 
 	const t = $derived(getT());
 	import { getAuthorFeed, deletePost } from '$lib/api/posts';
+	import { parseTextSegments } from '$lib/richtext';
+
+	const descSegments = $derived(profile?.description ? parseTextSegments(profile.description) : []);
 
 	function isRepostItem(f: AppBskyFeedDefs.FeedViewPost): boolean {
 		return !!(f.reason as { $type?: string } | undefined)?.$type?.includes('Repost');
@@ -111,7 +114,16 @@
 				</div>
 			</div>
 			{#if profile.description}
-				<p class="text-sm text-gray-700 dark:text-gray-300 mt-3 whitespace-pre-wrap">{profile.description}</p>
+				<p class="text-sm text-gray-700 dark:text-gray-300 mt-3 whitespace-pre-wrap">
+					{#each descSegments as seg}
+						{#if seg.type === 'link'}
+							<a href={seg.url} target="_blank" rel="noopener noreferrer"
+								class="text-[#0085ff] hover:underline break-all">{seg.text}</a>
+						{:else}
+							{seg.text}
+						{/if}
+					{/each}
+				</p>
 			{/if}
 			<div class="flex gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
 				<span><b class="text-gray-900 dark:text-gray-50">{profile.followsCount ?? 0}</b> {t.profile.follows}</span>
