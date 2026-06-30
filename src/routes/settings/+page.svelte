@@ -11,9 +11,15 @@
 	import { getTheme, setTheme, type Theme } from '$lib/stores/theme.svelte';
 	import { getT } from '$lib/stores/language.svelte';
 	import { avatarThumbnail } from '$lib/image';
+	import {
+		getRepostNextPostEnabled,
+		setRepostNextPostEnabled as syncRepostNextPostEnabled
+	} from '$lib/api/notifications';
 
 	let pushEnabled = $state(false);
 	let pushLoading = $state(false);
+	let repostNextPostEnabled = $state(false);
+	let repostNextPostLoading = $state(false);
 	let logoutLoading = $state(false);
 	const session = $derived(getSession());
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
@@ -37,6 +43,14 @@
 				const reg = await navigator.serviceWorker.ready;
 				const sub = await reg.pushManager.getSubscription();
 				pushEnabled = !!sub;
+			} catch {
+				// ignore
+			}
+		}
+
+		if (s?.accessJwt) {
+			try {
+				repostNextPostEnabled = await getRepostNextPostEnabled(s.accessJwt);
 			} catch {
 				// ignore
 			}
@@ -105,6 +119,22 @@
 			showToast(e instanceof Error ? e.message : t.settings.toast.pushFailed, 'error');
 		} finally {
 			pushLoading = false;
+		}
+	}
+
+	async function toggleRepostNextPost() {
+		const s = getSession();
+		if (!s?.accessJwt) return;
+
+		const next = !repostNextPostEnabled;
+		repostNextPostLoading = true;
+		try {
+			await syncRepostNextPostEnabled(s.accessJwt, next);
+			repostNextPostEnabled = next;
+		} catch (e) {
+			showToast(e instanceof Error ? e.message : t.settings.toast.repostNextPostFailed, 'error');
+		} finally {
+			repostNextPostLoading = false;
 		}
 	}
 
@@ -189,6 +219,30 @@
 						<span
 							class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200
 								{pushEnabled ? 'translate-x-6' : 'translate-x-0'}"
+						></span>
+					</button>
+				{/if}
+			</div>
+
+			<div class="flex items-center justify-between mt-3">
+				<div>
+					<p class="text-sm font-medium text-gray-800 dark:text-gray-200">{t.settings.repostNextPost.title}</p>
+					<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.settings.repostNextPost.description}</p>
+				</div>
+				{#if repostNextPostLoading}
+					<LoadingSpinner size={24} />
+				{:else}
+					<button
+						onclick={toggleRepostNextPost}
+						class="relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none
+							{repostNextPostEnabled ? 'bg-[#0085ff]' : 'bg-gray-200 dark:bg-gray-700'}"
+						role="switch"
+						aria-checked={repostNextPostEnabled}
+						aria-label={t.settings.repostNextPost.ariaLabel}
+					>
+						<span
+							class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200
+								{repostNextPostEnabled ? 'translate-x-6' : 'translate-x-0'}"
 						></span>
 					</button>
 				{/if}

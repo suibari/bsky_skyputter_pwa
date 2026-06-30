@@ -62,7 +62,8 @@
 		mention: { color: '#8b5cf6', icon: 'at' },
 		reply: { color: '#0085ff', icon: 'reply' },
 		quote: { color: '#f59e0b', icon: 'quote' },
-		'subscribed-post': { color: '#8b5cf6', icon: 'post' }
+		'subscribed-post': { color: '#8b5cf6', icon: 'post' },
+		'repost-next-post': { color: '#0085ff', icon: 'repost-next-post' }
 	};
 
 	const reasonLabels = $derived<Record<string, string>>({
@@ -74,13 +75,14 @@
 		mention: t.notificationItem.reasons.mention,
 		reply: t.notificationItem.reasons.reply,
 		quote: t.notificationItem.reasons.quote,
-		'subscribed-post': t.notificationItem.reasons.subscribedPost
+		'subscribed-post': t.notificationItem.reasons.subscribedPost,
+		'repost-next-post': t.notificationItem.reasons.repostNextPost
 	});
 
 	const label = $derived(reasonLabels[notification.reason] ?? notification.reason);
 	const iconInfo = $derived(reasonIcons[notification.reason] ?? { color: '#6b7280', icon: 'bell' });
 	const record = $derived(notification.record as { text?: string } | undefined);
-	const canInteract = $derived(['reply', 'mention', 'quote', 'subscribed-post'].includes(notification.reason));
+	const canInteract = $derived(['reply', 'mention', 'quote', 'subscribed-post', 'repost-next-post'].includes(notification.reason));
 	const isHighlightText = $derived(['reply', 'mention', 'quote'].includes(notification.reason));
 	const textClass = $derived(
 		isHighlightText
@@ -181,6 +183,17 @@
 		<svg class={cls} viewBox="0 0 20 20" fill="currentColor">
 			<path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5zm7 1a1 1 0 10-2 0v1H6a1 1 0 100 2h1v1a1 1 0 102 0V9h1a1 1 0 100-2H9V6zm4 0a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-1v3l-3-3h-1V8h.5A2.5 2.5 0 0013 5.5V6z" />
 		</svg>
+	{:else if iconInfo.icon === 'repost-next-post'}
+		<!-- 青のリポストマーク＋右下にオレンジの＋バッジ（二色アイコンのため currentColor は使わず色を直接指定） -->
+		<span class="relative inline-block {cls}">
+			<svg class="w-full h-full" viewBox="0 0 20 20" fill="#0085ff">
+				<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+			</svg>
+			<svg class="absolute -bottom-1 -right-1 w-2.5 h-2.5" viewBox="0 0 20 20">
+				<circle cx="10" cy="10" r="10" fill="#f97316" />
+				<path d="M10 5v10M5 10h10" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+			</svg>
+		</span>
 	{:else}
 		<svg class={cls} viewBox="0 0 20 20" fill="currentColor">
 			<path fill-rule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.67 2.43 2.902.848.137 1.705.248 2.57.331v3.443a.75.75 0 001.28.53l3.658-3.658A17.569 17.569 0 0015 14c2.236 0 4.43-.18 6.57-.524C23.007 13.245 24 11.986 24 10.574V5.426c0-1.413-.993-2.67-2.43-2.902A41.402 41.402 0 0015 2H10z" clip-rule="evenodd" />

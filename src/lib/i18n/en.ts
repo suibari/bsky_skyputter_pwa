@@ -91,7 +91,8 @@ export const en: Translation = {
 			mention: 'mentioned you',
 			reply: 'replied to you',
 			quote: 'quoted your post',
-			subscribedPost: 'posted'
+			subscribedPost: 'posted',
+			repostNextPost: 'posted next (reposted your post)'
 		},
 		others: (n: number) => `and ${n} other${n > 1 ? 's' : ''}`,
 		ariaExpand: 'Expand',
@@ -165,6 +166,11 @@ export const en: Translation = {
 			description: 'Receive new notifications via push',
 			ariaLabel: 'Push notifications'
 		},
+		repostNextPost: {
+			title: "Reposter's next post",
+			description: "Notify me when someone who reposted my post makes a new post",
+			ariaLabel: "Reposter's next post"
+		},
 		language: {
 			ja: 'Japanese',
 			en: 'English'
@@ -180,7 +186,8 @@ export const en: Translation = {
 			pushOff: 'Push notifications disabled',
 			pushPermissionRequired: 'Notification permission required',
 			pushNotSupported: 'Push notifications are not supported in this browser',
-			pushFailed: 'An error occurred'
+			pushFailed: 'An error occurred',
+			repostNextPostFailed: 'An error occurred'
 		}
 	},
 

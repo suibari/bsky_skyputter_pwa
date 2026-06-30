@@ -91,7 +91,8 @@ export const ja: Translation = {
 			mention: 'メンションしました',
 			reply: '返信しました',
 			quote: 'を引用しました',
-			subscribedPost: '投稿しました'
+			subscribedPost: '投稿しました',
+			repostNextPost: 'が投稿しました（あなたをリポスト）'
 		},
 		others: (n: number) => `他${n}人`,
 		ariaExpand: '展開する',
@@ -165,6 +166,11 @@ export const ja: Translation = {
 			description: '新着通知をプッシュ通知で受け取る',
 			ariaLabel: 'Push通知'
 		},
+		repostNextPost: {
+			title: 'リポストの次のポスト',
+			description: 'あなたの投稿をリポストした人が新しく投稿したときに通知します',
+			ariaLabel: 'リポストの次のポスト'
+		},
 		language: {
 			ja: '日本語',
 			en: 'English'
@@ -180,7 +186,8 @@ export const ja: Translation = {
 			pushOff: 'Push通知をオフにしました',
 			pushPermissionRequired: '通知の許可が必要です',
 			pushNotSupported: 'このブラウザはPush通知に対応していません',
-			pushFailed: 'エラーが発生しました'
+			pushFailed: 'エラーが発生しました',
+			repostNextPostFailed: 'エラーが発生しました'
 		}
 	},
 

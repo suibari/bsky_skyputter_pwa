@@ -98,6 +98,7 @@ export interface Translation {
 			reply: string;
 			quote: string;
 			subscribedPost: string;
+			repostNextPost: string;
 		};
 		others: (n: number) => string;
 		ariaExpand: string;
@@ -171,6 +172,11 @@ export interface Translation {
 			description: string;
 			ariaLabel: string;
 		};
+		repostNextPost: {
+			title: string;
+			description: string;
+			ariaLabel: string;
+		};
 		language: {
 			ja: string;
 			en: string;
@@ -186,6 +192,7 @@ export interface Translation {
 			pushPermissionRequired: string;
 			pushNotSupported: string;
 			pushFailed: string;
+			repostNextPostFailed: string;
 		};
 	};
 

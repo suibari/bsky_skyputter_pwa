@@ -16,8 +16,9 @@
 	import { showToast } from '$lib/stores/toast.svelte';
 	import { getT } from '$lib/stores/language.svelte';
 	import { createAgent } from '$lib/api/agent';
-	import { listNotifications, markSeen } from '$lib/api/notifications';
+	import { listNotifications, markSeen, getRepostNextPostEvents } from '$lib/api/notifications';
 	import { createLike } from '$lib/api/posts';
+	import { getSession } from '$lib/stores/auth.svelte';
 
 	const t = $derived(getT());
 
@@ -35,7 +36,10 @@
 	let lastTapCount: number | undefined;
 	let lastPushCount: number | undefined;
 
-	const THREAD_REASONS = ['reply', 'mention', 'quote', 'subscribed-post'];
+	const THREAD_REASONS = ['reply', 'mention', 'quote', 'subscribed-post', 'repost-next-post'];
+
+	// 「リポストの次のポスト」の合成通知に使う著者プロフィールのキャッシュ
+	const profileCache = new Map<string, AppBskyActorDefs.ProfileView>();
 
 	type Group = { key: string; reason: string; members: Notification[] };
 
@@ -355,15 +359,66 @@
 			.filter(Boolean);
 	}
 
+	// 「リポストの次のポスト」の未配信イベントを取得し、合成 Notification に変換する。
+	// カスタムイベントはページネーション対象ではない（小さな未読リストを毎回まるごと取得する）。
+	async function fetchRepostNextPostEvents(): Promise<Notification[]> {
+		const session = getSession();
+		if (!session?.accessJwt) return [];
+		try {
+			const events = await getRepostNextPostEvents(session.accessJwt);
+			if (events.length === 0) return [];
+
+			const agent = await createAgent();
+			const synthetic: Notification[] = [];
+			for (const event of events) {
+				let author = profileCache.get(event.reposterDid);
+				if (!author) {
+					try {
+						const res = await agent.getProfile({ actor: event.reposterDid });
+						author = res.data as unknown as AppBskyActorDefs.ProfileView;
+						profileCache.set(event.reposterDid, author);
+					} catch {
+						continue; // プロフィール取得失敗時はこのイベントをスキップ
+					}
+				}
+				synthetic.push({
+					uri: event.uri,
+					cid: event.cid,
+					author,
+					reason: 'repost-next-post',
+					record: {},
+					isRead: false,
+					indexedAt: event.createdAt
+				} as Notification);
+			}
+			return synthetic;
+		} catch {
+			return [];
+		}
+	}
+
+	// indexedAt の降順で2つの通知配列をマージする
+	function mergeByIndexedAt(a: Notification[], b: Notification[]): Notification[] {
+		if (b.length === 0) return a;
+		return [...a, ...b].sort(
+			(x, y) => new Date(y.indexedAt).getTime() - new Date(x.indexedAt).getTime()
+		);
+	}
+
 	async function loadMore(): Promise<boolean> {
 		if (loading || !hasMore) return false;
 		loading = true;
 		try {
-			const data = await listNotifications(cursor);
+			const isFirstPage = cursor === undefined && notifications.length === 0;
+			const [data, repostNextPostNotifs] = await Promise.all([
+				listNotifications(cursor),
+				isFirstPage ? fetchRepostNextPostEvents() : Promise.resolve([])
+			]);
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
-			await fetchSubjectPosts(data.notifications);
-			notifications = [...notifications, ...data.notifications];
+			const merged = mergeByIndexedAt(data.notifications, repostNextPostNotifs);
+			await fetchSubjectPosts(merged);
+			notifications = [...notifications, ...merged];
 		} catch (e) {
 			showToast(e instanceof Error ? e.message : t.notifications.toast.loadFailed, 'error');
 		} finally {
@@ -381,6 +436,7 @@
 		loading = true;
 		setNotificationsRefreshing(true);
 		try {
+			const repostNextPostNotifs = await fetchRepostNextPostEvents();
 			for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
 				if (gen !== refreshGen) return; // 後続トリガーに置き換えられた
 				let data;
@@ -395,12 +451,13 @@
 				const hasNew = !!freshNewest && freshNewest !== prevNewestUri;
 
 				if (hasNew || attempt === retryDelays.length) {
-					await fetchSubjectPosts(data.notifications);
+					const merged = mergeByIndexedAt(data.notifications, repostNextPostNotifs);
+					await fetchSubjectPosts(merged);
 					if (gen !== refreshGen) return;
-					const shouldKeepPrevious = prevNotifications.length > 0 && data.notifications.length === 0;
+					const shouldKeepPrevious = prevNotifications.length > 0 && merged.length === 0;
 					cursor = data.cursor;
 					hasMore = !!data.cursor;
-					notifications = shouldKeepPrevious ? prevNotifications : data.notifications;
+					notifications = shouldKeepPrevious ? prevNotifications : merged;
 					initialLoaded = true;
 					return;
 				}
