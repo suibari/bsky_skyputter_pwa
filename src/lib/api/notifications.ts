@@ -9,7 +9,7 @@ export type RepostNextPostEvent = {
 	createdAt: string;
 };
 
-// 未配信の「リポストの次のポスト」イベントを取得する（取得と同時にサーバー側で消費される）
+// 表示対象の「リポストの次のポスト」イベントを取得する（同じリポスト主ごとに最新1件）
 export async function getRepostNextPostEvents(accessJwt: string): Promise<RepostNextPostEvent[]> {
 	const res = await fetch(`${PUBLIC_API_URL}/api/notifications/repost-next-post`, {
 		headers: { Authorization: `Bearer ${accessJwt}` }
