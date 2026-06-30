@@ -152,6 +152,7 @@ export const en: Translation = {
 		sections: {
 			theme: 'Theme',
 			notifications: 'Notifications',
+			display: 'Display Settings',
 			account: 'Account',
 			about: 'About SkyPutter',
 			language: 'Language'
@@ -168,7 +169,7 @@ export const en: Translation = {
 		},
 		repostNextPost: {
 			title: "Reposter's next post",
-			description: "Notify me when someone who reposted my post makes a new post",
+			description: 'Display the next post of the person who reposted your post in the notifications',
 			ariaLabel: "Reposter's next post"
 		},
 		language: {

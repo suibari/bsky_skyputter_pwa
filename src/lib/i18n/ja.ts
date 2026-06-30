@@ -152,6 +152,7 @@ export const ja: Translation = {
 		sections: {
 			theme: 'テーマ',
 			notifications: '通知設定',
+			display: '表示設定',
 			account: 'アカウント',
 			about: 'SkyPutterについて',
 			language: '言語'
@@ -168,7 +169,7 @@ export const ja: Translation = {
 		},
 		repostNextPost: {
 			title: 'リポストの次のポスト',
-			description: 'あなたの投稿をリポストした人が新しく投稿したときに通知します',
+			description: 'あなたの投稿をリポストした人が次に投稿したポストを通知欄に表示する',
 			ariaLabel: 'リポストの次のポスト'
 		},
 		language: {

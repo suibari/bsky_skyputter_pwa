@@ -223,8 +223,11 @@
 					</button>
 				{/if}
 			</div>
+		</div>
 
-			<div class="flex items-center justify-between mt-3">
+		<div class="py-3 border-b border-gray-100 dark:border-gray-800">
+			<p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.settings.sections.display}</p>
+			<div class="flex items-center justify-between">
 				<div>
 					<p class="text-sm font-medium text-gray-800 dark:text-gray-200">{t.settings.repostNextPost.title}</p>
 					<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.settings.repostNextPost.description}</p>

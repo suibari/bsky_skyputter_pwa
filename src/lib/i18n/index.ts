@@ -158,6 +158,7 @@ export interface Translation {
 		sections: {
 			theme: string;
 			notifications: string;
+			display: string;
 			account: string;
 			about: string;
 			language: string;
