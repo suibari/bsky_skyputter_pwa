@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import CharCounter from '$lib/components/CharCounter.svelte';
 	import ImagePicker from '$lib/components/ImagePicker.svelte';
 	import VideoPicker from '$lib/components/VideoPicker.svelte';
@@ -17,14 +16,20 @@
 	import { getDraft, deleteDraft, saveDraft } from '$lib/db/drafts';
 	import { fetchOgp, type OgpData } from '$lib/api/ogp';
 	import LinkCardPreview from '$lib/components/LinkCardPreview.svelte';
-	import { getComposeText, setComposeText, clearComposeText, loadComposeText } from '$lib/stores/compose.svelte';
+	import {
+		loadComposeState,
+		saveComposeState,
+		clearComposeState,
+		type ComposeReplyContext,
+		type ComposeQuoteContext
+	} from '$lib/stores/compose.svelte';
 	import EmojiPicker from '$lib/components/EmojiPicker.svelte';
 	import { recordEmojiUse } from '$lib/stores/emoji-frequency.svelte';
 	import { getT } from '$lib/stores/language.svelte';
 
 	const t = $derived(getT());
 
-	let text = $state(getComposeText());
+	let text = $state('');
 	let images = $state<File[]>([]);
 	let video = $state<File | null>(null);
 	let posting = $state(false);
@@ -36,11 +41,8 @@
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
 	let mediaFileInput: HTMLInputElement;
 
-	type ReplyContext = { uri: string; cid: string; rootUri: string; rootCid: string; text: string; authorHandle: string };
-	type QuoteContext = { uri: string; cid: string; text: string; authorHandle: string };
-
-	let replyContext = $state<ReplyContext | null>(null);
-	let quoteContext = $state<QuoteContext | null>(null);
+	let replyContext = $state<ComposeReplyContext | null>(null);
+	let quoteContext = $state<ComposeQuoteContext | null>(null);
 
 	let ogpData = $state<OgpData | null>(null);
 	let ogpLoading = $state(false);
@@ -60,8 +62,10 @@
 	let mentionLoading = $state(false);
 	let mentionFocusIdx = $state(-1);
 	let mentionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let composePersistTimer: ReturnType<typeof setTimeout> | null = null;
 	let vpOffsetBottom = $state(0);
 	let toolbarHeight = $state(56);
+	let composeHydrated = false;
 
 	$effect(() => {
 		if (typeof window === 'undefined' || !window.visualViewport) return;
@@ -198,7 +202,33 @@
 	const highlightedText = $derived(computeHighlight(text) + (text.endsWith('\n') ? ' ' : ''));
 
 	$effect(() => {
-		if (!draftId) setComposeText(text);
+		text;
+		images;
+		video;
+		replyContext;
+		quoteContext;
+		ogpData;
+		ogpDismissed;
+
+		if (!composeHydrated) return;
+		if (composePersistTimer) clearTimeout(composePersistTimer);
+		composePersistTimer = setTimeout(() => {
+			void saveComposeState({
+				text,
+				images,
+				video,
+				replyContext,
+				quoteContext,
+				ogpData,
+				ogpDismissed
+			});
+		}, 400);
+	});
+
+	onDestroy(() => {
+		if (composePersistTimer) clearTimeout(composePersistTimer);
+		if (mentionDebounceTimer) clearTimeout(mentionDebounceTimer);
+		if (ogpDebounceTimer) clearTimeout(ogpDebounceTimer);
 	});
 
 	const URL_REGEX = /https?:\/\/[^\s]+/g;
@@ -263,8 +293,18 @@
 				draftCreatedAt = draft.createdAt;
 			}
 		} else {
-			loadComposeText();
-			text = getComposeText();
+			const composeState = await loadComposeState();
+			if (composeState) {
+				text = composeState.text;
+				images = composeState.images;
+				video = composeState.video;
+				replyContext = composeState.replyContext;
+				quoteContext = composeState.quoteContext;
+				ogpData = composeState.ogpData;
+				ogpDismissed = composeState.ogpDismissed;
+				ogpCurrentUrl = composeState.ogpData?.uri ?? text.match(URL_REGEX)?.[0] ?? null;
+				ogpLocked = composeState.ogpData !== null && !composeState.ogpDismissed;
+			}
 		}
 
 		const replyTo = $page.url.searchParams.get('replyTo');
@@ -313,6 +353,8 @@
 				quoteContext = { uri: quoteTo, cid: quoteCid, text: '', authorHandle: '' };
 			}
 		}
+
+		composeHydrated = true;
 	});
 
 	async function handlePost() {
@@ -380,7 +422,7 @@
 			ogpCurrentUrl = null;
 			ogpLocked = false;
 			resetMention();
-			clearComposeText();
+			await clearComposeState();
 			showToast(t.post.toast.posted, 'success');
 		} catch (e) {
 			videoUploading = false;
@@ -404,7 +446,7 @@
 			});
 			draftId = id;
 			if (!draftCreatedAt) draftCreatedAt = now;
-			clearComposeText();
+			await clearComposeState();
 			showToast(t.post.toast.draftSaved, 'success');
 		} catch {
 			showToast(t.post.toast.draftSaveFailed, 'error');
