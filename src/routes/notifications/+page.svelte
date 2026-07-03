@@ -271,7 +271,10 @@
 			}
 
 			// 通知投稿の同一著者連続自己リプライを最大3レベルまで遡って PDS から取得
-			let frontier = notifUris.filter((u) => next.has(u));
+			const repostNextPostUris = new Set(
+				newNotifications.filter((n) => n.reason === 'repost-next-post').map((n) => n.uri)
+			);
+			let frontier = notifUris.filter((u) => next.has(u) && !repostNextPostUris.has(u));
 			for (let level = 0; level < 3; level++) {
 				const parentUris: string[] = [];
 				for (const uri of frontier) {
@@ -374,18 +377,24 @@
 			if (events.length === 0) return [];
 
 			const agent = await createAgent();
+			const uniqueDids = [...new Set(events.map((e) => e.reposterDid))];
+			await Promise.all(
+				uniqueDids
+					.filter((did) => !profileCache.has(did))
+					.map(async (did) => {
+						try {
+							const res = await agent.getProfile({ actor: did });
+							profileCache.set(did, res.data as unknown as AppBskyActorDefs.ProfileView);
+						} catch {
+							// プロフィール取得失敗時は通知合成時にスキップする
+						}
+					})
+			);
+
 			const synthetic: Notification[] = [];
 			for (const event of events) {
-				let author = profileCache.get(event.reposterDid);
-				if (!author) {
-					try {
-						const res = await agent.getProfile({ actor: event.reposterDid });
-						author = res.data as unknown as AppBskyActorDefs.ProfileView;
-						profileCache.set(event.reposterDid, author);
-					} catch {
-						continue; // プロフィール取得失敗時はこのイベントをスキップ
-					}
-				}
+				const author = profileCache.get(event.reposterDid);
+				if (!author) continue;
 				synthetic.push({
 					uri: event.uri,
 					cid: event.cid,
