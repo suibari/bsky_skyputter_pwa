@@ -206,7 +206,14 @@ export const en: Translation = {
 	imagePicker: {
 		ariaAdd: 'Add image',
 		ariaRemove: 'Remove image',
-		altPreview: (n) => `Attached image ${n}`
+		altPreview: (n) => `Attached image ${n}`,
+		altModal: {
+			title: 'Alt Text',
+			placeholder: 'Describe the image...',
+			save: 'Save',
+			ariaOpen: (n) => `Set alt text for image ${n}`,
+			charCount: (n) => `${n}/1000`
+		}
 	},
 
 	videoPicker: {

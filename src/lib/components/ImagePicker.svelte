@@ -1,18 +1,24 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { getT } from '$lib/stores/language.svelte';
+	import AltTextModal from './AltTextModal.svelte';
 
 	let {
 		images = $bindable<File[]>([]),
+		alts = $bindable<string[]>([]),
 		maxImages = 10
 	}: {
 		images?: File[];
+		alts?: string[];
 		maxImages?: number;
 	} = $props();
 
 	let fileInput: HTMLInputElement;
 	let previews = $state<string[]>([]);
 	const urlMap = new Map<File, string>();
+
+	let altModalOpen = $state(false);
+	let altModalIndex = $state(-1);
 
 	$effect(() => {
 		const currentSet = new Set(images);
@@ -39,11 +45,25 @@
 		const remaining = maxImages - images.length;
 		const newFiles = files.slice(0, remaining).filter((f) => f.type.startsWith('image/'));
 		images = [...images, ...newFiles];
+		alts = [...alts, ...newFiles.map(() => '')];
 		fileInput.value = '';
 	}
 
 	function removeImage(index: number) {
 		images = images.filter((_, i) => i !== index);
+		alts = alts.filter((_, i) => i !== index);
+	}
+
+	function openAltModal(index: number) {
+		altModalIndex = index;
+		altModalOpen = true;
+	}
+
+	function handleAltSave(alt: string) {
+		const next = [...alts];
+		next[altModalIndex] = alt;
+		alts = next;
+		altModalOpen = false;
 	}
 
 	const t = $derived(getT());
@@ -51,11 +71,20 @@
 
 <div class="flex gap-2 overflow-x-auto pb-1 snap-x">
 	{#each previews as preview, i}
-		<div class="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shrink-0 snap-start">
-			<img src={preview} alt={t.imagePicker.altPreview(i + 1)} class="w-full h-full object-cover" />
+		<div class="relative w-24 h-24 shrink-0 snap-start">
+			<button
+				onclick={() => openAltModal(i)}
+				class="w-full h-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0085ff]"
+				aria-label={t.imagePicker.altModal.ariaOpen(i + 1)}
+			>
+				<img src={preview} alt={t.imagePicker.altPreview(i + 1)} class="w-full h-full object-cover" />
+				{#if alts[i]}
+					<span class="absolute bottom-1 left-1 text-[10px] leading-none bg-black/60 text-white px-1 py-0.5 rounded">ALT</span>
+				{/if}
+			</button>
 			<button
 				onclick={() => removeImage(i)}
-				class="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+				class="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center z-10"
 				aria-label={t.imagePicker.ariaRemove}
 			>
 				<svg class="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
@@ -68,7 +97,7 @@
 	{#if images.length < maxImages}
 		<button
 			onclick={() => fileInput.click()}
-			class="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0 snap-start"
+			class="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 shrink-0 snap-start"
 			aria-label={t.imagePicker.ariaAdd}
 		>
 			<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -85,4 +114,12 @@
 	multiple
 	class="hidden"
 	onchange={handleFileChange}
+/>
+
+<AltTextModal
+	open={altModalOpen}
+	imageUrl={previews[altModalIndex] ?? ''}
+	initialAlt={alts[altModalIndex] ?? ''}
+	onSave={handleAltSave}
+	onCancel={() => { altModalOpen = false; }}
 />

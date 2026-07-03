@@ -206,7 +206,14 @@ export const ja: Translation = {
 	imagePicker: {
 		ariaAdd: '画像を追加',
 		ariaRemove: '画像を削除',
-		altPreview: (n) => `添付画像 ${n}`
+		altPreview: (n) => `添付画像 ${n}`,
+		altModal: {
+			title: 'ALTテキスト',
+			placeholder: '画像の説明を入力...',
+			save: '保存',
+			ariaOpen: (n) => `画像${n}のALTテキストを設定`,
+			charCount: (n) => `${n}/1000`
+		}
 	},
 
 	videoPicker: {

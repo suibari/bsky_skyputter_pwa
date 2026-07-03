@@ -212,6 +212,13 @@ export interface Translation {
 		ariaAdd: string;
 		ariaRemove: string;
 		altPreview: (n: number) => string;
+		altModal: {
+			title: string;
+			placeholder: string;
+			save: string;
+			ariaOpen: (n: number) => string;
+			charCount: (n: number) => string;
+		};
 	};
 
 	videoPicker: {

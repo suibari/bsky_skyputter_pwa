@@ -31,6 +31,7 @@
 
 	let text = $state('');
 	let images = $state<File[]>([]);
+	let imageAlts = $state<string[]>([]);
 	let video = $state<File | null>(null);
 	let posting = $state(false);
 	let savingDraft = $state(false);
@@ -216,6 +217,7 @@
 			void saveComposeState({
 				text,
 				images,
+				imageAlts,
 				video,
 				replyContext,
 				quoteContext,
@@ -289,6 +291,7 @@
 			if (draft) {
 				text = draft.text;
 				images = draft.images.map((blob, i) => new File([blob], `draft-image-${i}`, { type: blob.type }));
+				imageAlts = new Array(images.length).fill('');
 				draftId = id;
 				draftCreatedAt = draft.createdAt;
 			}
@@ -297,6 +300,7 @@
 			if (composeState) {
 				text = composeState.text;
 				images = composeState.images;
+				imageAlts = composeState.imageAlts;
 				video = composeState.video;
 				replyContext = composeState.replyContext;
 				quoteContext = composeState.quoteContext;
@@ -369,7 +373,7 @@
 					Promise.all(images.map(uploadImage)),
 					Promise.all(images.map(getImageDimensions))
 				]);
-				uploadedImages = blobs.map((blob, i) => ({ blob, alt: '', aspectRatio: dims[i] }));
+				uploadedImages = blobs.map((blob, i) => ({ blob, alt: imageAlts[i] ?? '', aspectRatio: dims[i] }));
 			} else if (video) {
 				videoUploading = true;
 				const [blob, dims] = await Promise.all([
@@ -413,6 +417,7 @@
 
 			text = '';
 			images = [];
+			imageAlts = [];
 			video = null;
 			replyContext = null;
 			quoteContext = null;
@@ -569,7 +574,7 @@
 
 		{#if images.length > 0}
 			<div class="pl-13 shrink-0">
-				<ImagePicker bind:images />
+				<ImagePicker bind:images bind:alts={imageAlts} />
 			</div>
 		{/if}
 

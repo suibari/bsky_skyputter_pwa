@@ -24,6 +24,7 @@ export type ComposeQuoteContext = {
 export type ComposeState = {
 	text: string;
 	images: File[];
+	imageAlts: string[];
 	video: File | null;
 	replyContext: ComposeReplyContext | null;
 	quoteContext: ComposeQuoteContext | null;
@@ -33,6 +34,7 @@ export type ComposeState = {
 
 type PersistedComposeState = {
 	text: string;
+	imageAlts?: string[];
 	replyContext: ComposeReplyContext | null;
 	quoteContext: ComposeQuoteContext | null;
 	ogpData: OgpData | null;
@@ -109,6 +111,7 @@ export async function saveComposeState(state: ComposeState): Promise<void> {
 
 	const persisted: PersistedComposeState = {
 		text: state.text,
+		imageAlts: state.imageAlts,
 		replyContext: state.replyContext,
 		quoteContext: state.quoteContext,
 		ogpData: state.ogpData,
@@ -142,6 +145,7 @@ export async function loadComposeState(): Promise<ComposeState | null> {
 	return {
 		text: parsed.text,
 		images,
+		imageAlts: parsed.imageAlts ?? new Array(images.length).fill(''),
 		video,
 		replyContext: parsed.replyContext,
 		quoteContext: parsed.quoteContext,
