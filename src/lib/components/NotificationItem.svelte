@@ -2,6 +2,7 @@
 	import type { AppBskyNotificationListNotifications, AppBskyFeedDefs } from '@atproto/api';
 	import ImageViewer from './ImageViewer.svelte';
 	import VideoViewer from './VideoViewer.svelte';
+	import RepostIcon from './RepostIcon.svelte';
 	import { avatarThumbnail } from '$lib/image';
 	import { getT } from '$lib/stores/language.svelte';
 	import { parseTextSegments } from '$lib/richtext';
@@ -176,9 +177,7 @@
 			<path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-2.184C4.032 12.416 2.5 10.272 2.5 7.5a4.5 4.5 0 018-2.828A4.5 4.5 0 0118.5 7.5c0 2.772-1.532 4.916-3.385 6.536a22.049 22.049 0 01-2.582 2.184 21.002 21.002 0 01-1.162.682l-.019.01-.005.003h-.002a.739.739 0 01-.69.001l-.002-.001z" />
 		</svg>
 	{:else if iconInfo.icon === 'repost'}
-		<svg class={cls} viewBox="0 0 20 20" fill="currentColor">
-			<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
-		</svg>
+		<RepostIcon class={cls} />
 	{:else if iconInfo.icon === 'follow'}
 		<svg class={cls} viewBox="0 0 20 20" fill="currentColor">
 			<path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zM2.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 018 18a9.953 9.953 0 01-5.385-1.572zM16.25 5.75a.75.75 0 00-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2z" />
@@ -188,16 +187,7 @@
 			<path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5zm7 1a1 1 0 10-2 0v1H6a1 1 0 100 2h1v1a1 1 0 102 0V9h1a1 1 0 100-2H9V6zm4 0a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-1v3l-3-3h-1V8h.5A2.5 2.5 0 0013 5.5V6z" />
 		</svg>
 	{:else if iconInfo.icon === 'repost-next-post'}
-		<!-- 青のリポストマーク＋右下にオレンジの＋バッジ（二色アイコンのため currentColor は使わず色を直接指定） -->
-		<span class="relative inline-block {cls}">
-			<svg class="w-full h-full" viewBox="0 0 20 20" fill="#0085ff">
-				<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
-			</svg>
-			<svg class="absolute -bottom-1 -right-1 w-2.5 h-2.5" viewBox="0 0 20 20">
-				<circle cx="10" cy="10" r="10" fill="#f97316" />
-				<path d="M10 5v10M5 10h10" stroke="white" stroke-width="2.5" stroke-linecap="round" />
-			</svg>
-		</span>
+		<RepostIcon class={cls} />
 	{:else}
 		<svg class={cls} viewBox="0 0 20 20" fill="currentColor">
 			<path fill-rule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.67 2.43 2.902.848.137 1.705.248 2.57.331v3.443a.75.75 0 001.28.53l3.658-3.658A17.569 17.569 0 0015 14c2.236 0 4.43-.18 6.57-.524C23.007 13.245 24 11.986 24 10.574V5.426c0-1.413-.993-2.67-2.43-2.902A41.402 41.402 0 0015 2H10z" clip-rule="evenodd" />
@@ -456,9 +446,7 @@
 								class="p-1 {reposted ? 'text-[#22c55e]' : 'text-gray-400 hover:text-[#22c55e]'}"
 								aria-label={t.notificationItem.ariaRepost}
 							>
-								<svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-									<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
-								</svg>
+								<RepostIcon class="w-4 h-4" />
 							</button>
 						{/if}
 						{#if onReply}
