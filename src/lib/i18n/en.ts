@@ -12,6 +12,7 @@ export const en: Translation = {
 	common: {
 		cancel: 'Cancel',
 		delete: 'Delete',
+		repost: 'Repost',
 		loading: 'Loading...',
 		loadAll: 'All loaded',
 		close: 'Close'
@@ -77,7 +78,9 @@ export const en: Translation = {
 		toast: {
 			loadFailed: 'Failed to load',
 			liked: 'Liked!',
-			likeFailed: 'Failed to like'
+			likeFailed: 'Failed to like',
+			reposted: 'Reposted!',
+			repostFailed: 'Failed to repost'
 		}
 	},
 
@@ -100,6 +103,7 @@ export const en: Translation = {
 		ariaZoomImage: 'View image',
 		ariaPlayVideo: 'Play video',
 		ariaLike: 'Like',
+		ariaRepost: 'Repost',
 		ariaReply: 'Reply',
 		ariaQuote: 'Quote',
 		altAttachedImage: 'Attached image',
@@ -137,7 +141,9 @@ export const en: Translation = {
 		toast: {
 			deleted: 'Deleted',
 			deleteFailed: 'Failed to delete',
-			loadFailed: 'Failed to load'
+			loadFailed: 'Failed to load',
+			reposted: 'Reposted!',
+			repostFailed: 'Failed to repost'
 		},
 		hashtagSearch: {
 			title: (tag: string) => `My posts with #${tag}`,
@@ -249,12 +255,18 @@ export const en: Translation = {
 	postCard: {
 		ariaZoomImage: 'View image',
 		ariaPlayVideo: 'Play video',
+		ariaRepost: 'Repost',
 		ariaReply: 'Reply',
 		ariaQuote: 'Quote',
 		ariaDelete: 'Delete',
 		altAttachedImage: 'Attached image',
 		altVideoThumbnail: 'Video thumbnail',
 		youReposted: 'You reposted'
+	},
+
+	repostModal: {
+		title: 'Confirm Repost',
+		message: 'Repost this post?'
 	},
 
 	infiniteScroll: {

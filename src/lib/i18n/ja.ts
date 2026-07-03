@@ -12,6 +12,7 @@ export const ja: Translation = {
 	common: {
 		cancel: 'キャンセル',
 		delete: '削除',
+		repost: 'リポスト',
 		loading: '読み込み中...',
 		loadAll: 'すべて読み込みました',
 		close: '閉じる'
@@ -77,7 +78,9 @@ export const ja: Translation = {
 		toast: {
 			loadFailed: '読み込みに失敗しました',
 			liked: 'いいねしました',
-			likeFailed: 'いいねに失敗しました'
+			likeFailed: 'いいねに失敗しました',
+			reposted: 'リポストしました',
+			repostFailed: 'リポストに失敗しました'
 		}
 	},
 
@@ -100,6 +103,7 @@ export const ja: Translation = {
 		ariaZoomImage: '画像を拡大',
 		ariaPlayVideo: '動画を再生',
 		ariaLike: 'いいね',
+		ariaRepost: 'リポスト',
 		ariaReply: '返信',
 		ariaQuote: '引用',
 		altAttachedImage: '添付画像',
@@ -137,7 +141,9 @@ export const ja: Translation = {
 		toast: {
 			deleted: '削除しました',
 			deleteFailed: '削除に失敗しました',
-			loadFailed: '読み込みに失敗しました'
+			loadFailed: '読み込みに失敗しました',
+			reposted: 'リポストしました',
+			repostFailed: 'リポストに失敗しました'
 		},
 		hashtagSearch: {
 			title: (tag: string) => `#${tag} の自分の投稿`,
@@ -249,12 +255,18 @@ export const ja: Translation = {
 	postCard: {
 		ariaZoomImage: '画像を拡大',
 		ariaPlayVideo: '動画を再生',
+		ariaRepost: 'リポスト',
 		ariaReply: 'リプライ',
 		ariaQuote: '引用',
 		ariaDelete: '削除',
 		altAttachedImage: '添付画像',
 		altVideoThumbnail: '動画サムネイル',
 		youReposted: 'あなたがリポストしました'
+	},
+
+	repostModal: {
+		title: 'リポストの確認',
+		message: 'この投稿をリポストしますか？'
 	},
 
 	infiniteScroll: {

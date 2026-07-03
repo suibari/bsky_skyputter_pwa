@@ -30,7 +30,9 @@
 		notifPost,
 		threadTexts,
 		liked = false,
+		reposted = false,
 		onLike,
+		onRepost,
 		onReply,
 		onQuote
 	}: {
@@ -40,7 +42,9 @@
 		notifPost?: AppBskyFeedDefs.PostView;
 		threadTexts?: string[];
 		liked?: boolean;
+		reposted?: boolean;
 		onLike?: (uri: string, cid: string) => void;
+		onRepost?: (uri: string, cid: string) => void;
 		onReply?: (uri: string, cid: string) => void;
 		onQuote?: (uri: string, cid: string) => void;
 	} = $props();
@@ -433,7 +437,7 @@
 
 				{@render contentBody()}
 
-				{#if canInteract && (onLike || onReply || onQuote)}
+				{#if canInteract && (onLike || onRepost || onReply || onQuote)}
 					<div class="flex items-center justify-end gap-2 mt-1.5">
 						{#if onLike}
 							<button
@@ -443,6 +447,17 @@
 							>
 								<svg class="w-4 h-4" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 									<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+								</svg>
+							</button>
+						{/if}
+						{#if onRepost}
+							<button
+								onclick={() => onRepost?.(notification.uri, notification.cid)}
+								class="p-1 {reposted ? 'text-[#22c55e]' : 'text-gray-400 hover:text-[#22c55e]'}"
+								aria-label={t.notificationItem.ariaRepost}
+							>
+								<svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+									<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
 								</svg>
 							</button>
 						{/if}

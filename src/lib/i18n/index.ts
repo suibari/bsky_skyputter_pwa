@@ -20,6 +20,7 @@ export interface Translation {
 	common: {
 		cancel: string;
 		delete: string;
+		repost: string;
 		loading: string;
 		loadAll: string;
 		close: string;
@@ -84,6 +85,8 @@ export interface Translation {
 			loadFailed: string;
 			liked: string;
 			likeFailed: string;
+			reposted: string;
+			repostFailed: string;
 		};
 	};
 
@@ -106,6 +109,7 @@ export interface Translation {
 		ariaZoomImage: string;
 		ariaPlayVideo: string;
 		ariaLike: string;
+		ariaRepost: string;
 		ariaReply: string;
 		ariaQuote: string;
 		altAttachedImage: string;
@@ -144,6 +148,8 @@ export interface Translation {
 			deleted: string;
 			deleteFailed: string;
 			loadFailed: string;
+			reposted: string;
+			repostFailed: string;
 		};
 		hashtagSearch: {
 			title: (tag: string) => string;
@@ -254,11 +260,18 @@ export interface Translation {
 	postCard: {
 		ariaZoomImage: string;
 		ariaPlayVideo: string;
+		ariaRepost: string;
 		ariaReply: string;
 		ariaQuote: string;
 		ariaDelete: string;
 		altAttachedImage: string;
 		altVideoThumbnail: string;
+		youReposted: string;
+	};
+
+	repostModal: {
+		title: string;
+		message: string;
 	};
 
 	infiniteScroll: {

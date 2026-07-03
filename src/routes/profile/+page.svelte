@@ -13,7 +13,7 @@
 	import { createAgent } from '$lib/api/agent';
 
 	const t = $derived(getT());
-	import { getAuthorFeedWithReplies, deletePost, searchPostsByHashtag } from '$lib/api/posts';
+	import { getAuthorFeedWithReplies, deletePost, createRepost, searchPostsByHashtag } from '$lib/api/posts';
 	import { parseTextSegments } from '$lib/richtext';
 	import ProfileThreadCard from '$lib/components/ProfileThreadCard.svelte';
 
@@ -82,6 +82,8 @@
 	let initialLoaded = $state(false);
 	let hasMore = $state(true);
 	let deleteTarget = $state<string | null>(null);
+	let repostTarget = $state<{ uri: string; cid: string } | null>(null);
+	let repostedUris = $state<Set<string>>(new Set());
 	let profile = $state<AppBskyActorDefs.ProfileViewDetailed | null>(null);
 
 	async function loadProfile() {
@@ -107,6 +109,11 @@
 			posts = [...posts, ...data.feed];
 			cursor = data.cursor;
 			hasMore = !!data.cursor;
+			const nextReposted = new Set(repostedUris);
+			for (const item of data.feed) {
+				if ((item.post.viewer as { repost?: string } | undefined)?.repost) nextReposted.add(item.post.uri);
+			}
+			repostedUris = nextReposted;
 		} catch (e) {
 			showToast(e instanceof Error ? e.message : t.profile.toast.loadFailed, 'error');
 		} finally {
@@ -161,6 +168,27 @@
 	function closeHashtagSearch() {
 		hashtagSearchTag = null;
 		hashtagSearchPosts = [];
+	}
+
+	function handleRepost(uri: string, cid: string) {
+		if (repostedUris.has(uri)) return;
+		repostTarget = { uri, cid };
+	}
+
+	async function confirmRepost() {
+		if (!repostTarget) return;
+		const { uri, cid } = repostTarget;
+		repostedUris = new Set([...repostedUris, uri]);
+		repostTarget = null;
+		try {
+			await createRepost(uri, cid);
+			showToast(t.profile.toast.reposted, 'success');
+		} catch {
+			const next = new Set(repostedUris);
+			next.delete(uri);
+			repostedUris = next;
+			showToast(t.profile.toast.repostFailed, 'error');
+		}
 	}
 
 	function handleReply(uri: string, cid: string) {
@@ -240,17 +268,21 @@
 					chain={ditem.chain}
 					parentPost={ditem.parentPost}
 					onDelete={(uri) => (deleteTarget = uri)}
+					onRepost={handleRepost}
 					onReply={handleReply}
 					onQuote={handleQuote}
+					reposted={repostedUris.has(ditem.chain[ditem.chain.length - 1].post.uri)}
 				/>
 			{:else}
 				<PostCard
 					feedViewPost={ditem.item}
 					parentPost={ditem.parentPost}
 					onDelete={isRepostItem(ditem.item) ? undefined : (uri) => (deleteTarget = uri)}
+					onRepost={handleRepost}
 					onReply={handleReply}
 					onQuote={handleQuote}
 					onHashtag={handleHashtag}
+					reposted={repostedUris.has(ditem.item.post.uri)}
 				/>
 			{/if}
 		{/each}
@@ -265,6 +297,16 @@
 	confirmLabel={t.common.delete}
 	onConfirm={confirmDelete}
 	onCancel={() => (deleteTarget = null)}
+/>
+
+<Modal
+	open={!!repostTarget}
+	title={t.repostModal.title}
+	message={t.repostModal.message}
+	confirmLabel={t.common.repost}
+	confirmClass="bg-green-500"
+	onConfirm={confirmRepost}
+	onCancel={() => (repostTarget = null)}
 />
 
 {#if hashtagSearchTag}

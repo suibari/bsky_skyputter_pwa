@@ -12,16 +12,20 @@
 		feedViewPost,
 		parentPost,
 		onDelete,
+		onRepost,
 		onReply,
 		onQuote,
-		onHashtag
+		onHashtag,
+		reposted = false
 	}: {
 		feedViewPost: AppBskyFeedDefs.FeedViewPost;
 		parentPost?: AppBskyFeedDefs.PostView;
 		onDelete?: (uri: string) => void;
+		onRepost?: (uri: string, cid: string) => void;
 		onReply?: (uri: string, cid: string) => void;
 		onQuote?: (uri: string, cid: string) => void;
 		onHashtag?: (tag: string) => void;
+		reposted?: boolean;
 	} = $props();
 
 	const post = feedViewPost.post;
@@ -269,6 +273,17 @@
 
 			<div class="flex-1"></div>
 
+			{#if onRepost}
+				<button
+					onclick={() => onRepost?.(post.uri, post.cid)}
+					class="p-1 {reposted ? 'text-[#22c55e]' : 'text-gray-400 hover:text-[#22c55e]'}"
+					aria-label={t.postCard.ariaRepost}
+				>
+					<svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+						<path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H5.498a.75.75 0 00-.75.75v3.498a.75.75 0 001.5 0v-1.732l.31.311a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V3.198a.75.75 0 00-1.5 0v1.544l-.311-.31a7 7 0 00-11.712 3.138.75.75 0 101.449.39A5.502 5.502 0 0114.5 3.74l.31.31h-2.433a.75.75 0 000 1.5h3.498a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+					</svg>
+				</button>
+			{/if}
 			{#if onReply}
 				<button
 					onclick={() => onReply?.(post.uri, post.cid)}

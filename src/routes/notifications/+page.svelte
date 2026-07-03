@@ -17,7 +17,8 @@
 	import { getT } from '$lib/stores/language.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { listNotifications, markSeen, getRepostNextPostEvents } from '$lib/api/notifications';
-	import { createLike } from '$lib/api/posts';
+	import { createLike, createRepost } from '$lib/api/posts';
+	import Modal from '$lib/components/Modal.svelte';
 	import { getSession } from '$lib/stores/auth.svelte';
 
 	const t = $derived(getT());
@@ -31,6 +32,8 @@
 	let hasMore = $state(true);
 	let subjectPostMap = $state<Map<string, AppBskyFeedDefs.PostView>>(new Map());
 	let likedUris = $state<Set<string>>(new Set());
+	let repostedUris = $state<Set<string>>(new Set());
+	let repostTarget = $state<{ uri: string; cid: string } | null>(null);
 	let replyMap = $state<Map<string, string[]>>(new Map());
 	let refreshGen = 0;
 	let lastTapCount: number | undefined;
@@ -229,6 +232,7 @@
 			const agent = await createAgent();
 			const next = new Map(subjectPostMap);
 			const nextLiked = new Set(likedUris);
+			const nextReposted = new Set(repostedUris);
 
 			// subjectUris は既存投稿なので AppView で取得（いいね数等も取れる）
 			if (subjectUris.length > 0) {
@@ -236,6 +240,7 @@
 				for (const post of res.data.posts) {
 					next.set(post.uri, post);
 					if ((post.viewer as { like?: string } | undefined)?.like) nextLiked.add(post.uri);
+					if ((post.viewer as { repost?: string } | undefined)?.repost) nextReposted.add(post.uri);
 				}
 			}
 
@@ -256,9 +261,8 @@
 				try {
 					const appViewRes = await agent.api.app.bsky.feed.getPosts({ uris: notifUris });
 					for (const post of appViewRes.data.posts) {
-						if ((post.viewer as { like?: string } | undefined)?.like) {
-							nextLiked.add(post.uri);
-						}
+						if ((post.viewer as { like?: string } | undefined)?.like) nextLiked.add(post.uri);
+						if ((post.viewer as { repost?: string } | undefined)?.repost) nextReposted.add(post.uri);
 						next.set(post.uri, post);
 					}
 				} catch {
@@ -315,6 +319,7 @@
 
 			subjectPostMap = next;
 			likedUris = nextLiked;
+			repostedUris = nextReposted;
 		} catch {
 			// 取得失敗は無視
 		}
@@ -489,6 +494,27 @@
 		}
 	}
 
+	function handleRepost(uri: string, cid: string) {
+		if (repostedUris.has(uri)) return;
+		repostTarget = { uri, cid };
+	}
+
+	async function confirmRepost() {
+		if (!repostTarget) return;
+		const { uri, cid } = repostTarget;
+		repostedUris = new Set([...repostedUris, uri]);
+		repostTarget = null;
+		try {
+			await createRepost(uri, cid);
+			showToast(t.notifications.toast.reposted, 'success');
+		} catch {
+			const next = new Set(repostedUris);
+			next.delete(uri);
+			repostedUris = next;
+			showToast(t.notifications.toast.repostFailed, 'error');
+		}
+	}
+
 	function handleReply(uri: string, cid: string) {
 		goto(`/post?replyTo=${encodeURIComponent(uri)}&replyCid=${encodeURIComponent(cid)}`);
 	}
@@ -566,7 +592,9 @@
 				notifPost={subjectPostMap.get(notification.uri)}
 				threadTexts={THREAD_REASONS.includes(notification.reason) ? getThreadTexts(notification.uri) : undefined}
 				liked={likedUris.has(notification.uri)}
+				reposted={repostedUris.has(notification.uri)}
 				onLike={handleLike}
+				onRepost={handleRepost}
 				onReply={handleReply}
 				onQuote={handleQuote}
 			/>
@@ -574,3 +602,13 @@
 		<InfiniteScroll {loading} {hasMore} onLoadMore={loadMore} />
 	{/if}
 </div>
+
+<Modal
+	open={!!repostTarget}
+	title={t.repostModal.title}
+	message={t.repostModal.message}
+	confirmLabel={t.common.repost}
+	confirmClass="bg-green-500"
+	onConfirm={confirmRepost}
+	onCancel={() => (repostTarget = null)}
+/>

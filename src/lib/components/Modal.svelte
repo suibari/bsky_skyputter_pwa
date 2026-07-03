@@ -6,6 +6,7 @@
 		title = '',
 		message = '',
 		confirmLabel,
+		confirmClass = 'bg-red-500',
 		onConfirm,
 		onCancel
 	}: {
@@ -13,6 +14,7 @@
 		title?: string;
 		message?: string;
 		confirmLabel?: string;
+		confirmClass?: string;
 		onConfirm: () => void;
 		onCancel: () => void;
 	} = $props();
@@ -34,7 +36,7 @@
 				</button>
 				<button
 					onclick={onConfirm}
-					class="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium"
+					class="px-4 py-2 rounded-xl {confirmClass} text-white text-sm font-medium"
 				>
 					{confirmLabel ?? t.common.delete}
 				</button>

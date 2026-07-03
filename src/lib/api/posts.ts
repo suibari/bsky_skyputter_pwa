@@ -130,6 +130,11 @@ export async function createLike(uri: string, cid: string) {
 	return agent.like(uri, cid);
 }
 
+export async function createRepost(uri: string, cid: string) {
+	const agent = await createAgent();
+	return agent.repost(uri, cid);
+}
+
 export async function searchPostsByHashtag(tag: string, authorHandle: string, cursor?: string) {
 	const agent = await createAgent();
 	const res = await agent.api.app.bsky.feed.searchPosts({
