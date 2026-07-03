@@ -64,6 +64,7 @@
 	let mentionFocusIdx = $state(-1);
 	let mentionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 	let composePersistTimer: ReturnType<typeof setTimeout> | null = null;
+	let flushOnHide: (() => void) | null = null;
 	let vpOffsetBottom = $state(0);
 	let toolbarHeight = $state(56);
 	let composeHydrated = false;
@@ -228,7 +229,11 @@
 	});
 
 	onDestroy(() => {
-		if (composePersistTimer) clearTimeout(composePersistTimer);
+		if (flushOnHide) document.removeEventListener('visibilitychange', flushOnHide);
+		if (composePersistTimer) {
+			clearTimeout(composePersistTimer);
+			void saveComposeState({ text, images, imageAlts, video, replyContext, quoteContext, ogpData, ogpDismissed });
+		}
 		if (mentionDebounceTimer) clearTimeout(mentionDebounceTimer);
 		if (ogpDebounceTimer) clearTimeout(ogpDebounceTimer);
 	});
@@ -359,6 +364,15 @@
 		}
 
 		composeHydrated = true;
+
+		flushOnHide = () => {
+			if (document.visibilityState === 'hidden' && composePersistTimer) {
+				clearTimeout(composePersistTimer);
+				composePersistTimer = null;
+				void saveComposeState({ text, images, imageAlts, video, replyContext, quoteContext, ogpData, ogpDismissed });
+			}
+		};
+		document.addEventListener('visibilitychange', flushOnHide);
 	});
 
 	async function handlePost() {
