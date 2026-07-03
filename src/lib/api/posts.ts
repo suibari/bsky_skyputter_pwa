@@ -44,6 +44,16 @@ export type PostExternalEmbed = {
 	thumbBlob?: BlobRef;
 };
 
+function normalizeHttpUrl(value: string | undefined): string | null {
+	if (!value) return null;
+	try {
+		const parsed = new URL(value.trim());
+		return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : null;
+	} catch {
+		return null;
+	}
+}
+
 export async function createPost(params: {
 	text: string;
 	images?: PostImageEmbed[];
@@ -100,15 +110,18 @@ export async function createPost(params: {
 			...(params.video.aspectRatio ? { aspectRatio: params.video.aspectRatio } : {})
 		};
 	} else if (params.external) {
-		record.embed = {
-			$type: 'app.bsky.embed.external',
-			external: {
-				uri: params.external.uri,
-				title: params.external.title,
-				description: params.external.description,
-				...(params.external.thumbBlob ? { thumb: params.external.thumbBlob } : {})
-			}
-		};
+		const externalUri = normalizeHttpUrl(params.external.uri);
+		if (externalUri) {
+			record.embed = {
+				$type: 'app.bsky.embed.external',
+				external: {
+					uri: externalUri,
+					title: params.external.title,
+					description: params.external.description,
+					...(params.external.thumbBlob ? { thumb: params.external.thumbBlob } : {})
+				}
+			};
+		}
 	}
 
 	if (params.replyTo) {

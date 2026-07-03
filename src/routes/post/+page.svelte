@@ -8,8 +8,8 @@
 	import { getSession, cacheAvatar } from '$lib/stores/auth.svelte';
 	import { createAgent } from '$lib/api/agent';
 	import { showToast } from '$lib/stores/toast.svelte';
-	import type { BlobRef, AppBskyFeedPost, AppBskyActorDefs } from '@atproto/api';
-	import { createPost, type PostExternalEmbed } from '$lib/api/posts';
+	import type { AppBskyFeedPost, AppBskyActorDefs } from '@atproto/api';
+	import { createPost, type PostExternalEmbed, type PostImageEmbed, type PostVideoEmbed } from '$lib/api/posts';
 	import MentionSuggestions from '$lib/components/MentionSuggestions.svelte';
 	import { avatarThumbnail } from '$lib/image';
 	import { uploadImage, uploadVideo, getImageDimensions, getVideoDimensions } from '$lib/api/media';
@@ -264,6 +264,25 @@
 
 	const URL_REGEX = /https?:\/\/[^\s]+/g;
 
+	function normalizeHttpUrl(value: string | null | undefined): string | null {
+		if (!value) return null;
+		try {
+			const parsed = new URL(value.trim());
+			return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : null;
+		} catch {
+			return null;
+		}
+	}
+
+	function firstValidTextUrl(): string | null {
+		const urls = text.match(URL_REGEX) ?? [];
+		for (const url of urls) {
+			const normalized = normalizeHttpUrl(url);
+			if (normalized) return normalized;
+		}
+		return null;
+	}
+
 	$effect(() => {
 		const urls = text.match(URL_REGEX);
 		const firstUrl = urls?.[0] ?? null;
@@ -403,8 +422,8 @@
 		if (!canPost) return;
 		posting = true;
 		try {
-			let uploadedImages: { blob: BlobRef; alt: string }[] = [];
-			let uploadedVideo: { blob: BlobRef; alt: string } | undefined;
+			let uploadedImages: PostImageEmbed[] = [];
+			let uploadedVideo: PostVideoEmbed | undefined;
 
 			if (images.length > 0) {
 				const [blobs, dims] = await Promise.all([
@@ -425,8 +444,11 @@
 
 			let external: PostExternalEmbed | undefined;
 			if (ogpData && !ogpDismissed && uploadedImages.length === 0 && !uploadedVideo) {
-				external = { uri: ogpData.uri, title: ogpData.title, description: ogpData.description };
-				if (ogpData.thumb) {
+				const externalUri = normalizeHttpUrl(ogpData.uri) ?? firstValidTextUrl();
+				if (externalUri) {
+					external = { uri: externalUri, title: ogpData.title, description: ogpData.description };
+				}
+				if (external && ogpData.thumb) {
 					try {
 						const agent = await createAgent();
 						const thumbRes = await fetch(ogpData.thumb);
