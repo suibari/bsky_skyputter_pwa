@@ -69,6 +69,13 @@
 	let toolbarHeight = $state(56);
 	let composeHydrated = false;
 
+	let replyExpanded = $state(false);
+	let quoteExpanded = $state(false);
+	let replyContentEl = $state<HTMLElement | null>(null);
+	let quoteContentEl = $state<HTMLElement | null>(null);
+	let replyIsClamped = $state(false);
+	let quoteIsClamped = $state(false);
+
 	$effect(() => {
 		if (typeof window === 'undefined' || !window.visualViewport) return;
 		const vv = window.visualViewport;
@@ -82,6 +89,23 @@
 			vv.removeEventListener('resize', update);
 			vv.removeEventListener('scroll', update);
 		};
+	});
+
+	$effect(() => { replyContext; replyExpanded = false; replyIsClamped = false; });
+	$effect(() => { quoteContext; quoteExpanded = false; quoteIsClamped = false; });
+
+	$effect(() => {
+		if (!replyContentEl || replyExpanded) return;
+		replyIsClamped = [...replyContentEl.querySelectorAll('p')].some(
+			(p) => p.scrollHeight > p.clientHeight
+		);
+	});
+
+	$effect(() => {
+		if (!quoteContentEl || quoteExpanded) return;
+		quoteIsClamped = [...quoteContentEl.querySelectorAll('p')].some(
+			(p) => p.scrollHeight > p.clientHeight
+		);
 	});
 
 	function handleEmojiSelect(emoji: string) {
@@ -607,7 +631,7 @@
 	</div>
 
 	{#if replyContext}
-		<div class="mx-4 mb-1 border-l-2 border-blue-200 dark:border-blue-800 pl-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-r-lg relative shrink-0">
+		<div bind:this={replyContentEl} class="mx-4 mb-1 border-l-2 border-blue-200 dark:border-blue-800 pl-3 py-1 bg-blue-50 dark:bg-blue-950 rounded-r-lg relative shrink-0">
 			<button
 				onclick={() => (replyContext = null)}
 				class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
@@ -615,13 +639,20 @@
 			>✕</button>
 			<p class="text-xs text-blue-500 font-medium mb-0.5">{t.post.replyLabel(replyContext.authorHandle)}</p>
 			{#if replyContext.text}
-				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 pr-4">{replyContext.text}</p>
+				<p class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap pr-4 {replyExpanded ? '' : 'line-clamp-2'}">{replyContext.text}</p>
+				{#if replyIsClamped || replyExpanded}
+					<button
+						onclick={() => (replyExpanded = !replyExpanded)}
+						class="text-[10px] text-blue-400 hover:text-blue-500 mt-0.5"
+						aria-label={replyExpanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
+					>{replyExpanded ? '▲' : '▼'}</button>
+				{/if}
 			{/if}
 		</div>
 	{/if}
 
 	{#if quoteContext}
-		<div class="mx-4 mb-1 border border-amber-200 dark:border-amber-800 pl-3 pr-8 py-2 bg-amber-50 dark:bg-amber-950 rounded-lg relative shrink-0">
+		<div bind:this={quoteContentEl} class="mx-4 mb-1 border border-amber-200 dark:border-amber-800 pl-3 pr-8 py-2 bg-amber-50 dark:bg-amber-950 rounded-lg relative shrink-0">
 			<button
 				onclick={() => (quoteContext = null)}
 				class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 text-xs"
@@ -629,7 +660,14 @@
 			>✕</button>
 			<p class="text-xs text-amber-600 font-medium mb-0.5">{t.post.quoteLabel(quoteContext.authorHandle)}</p>
 			{#if quoteContext.text}
-				<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{quoteContext.text}</p>
+				<p class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap {quoteExpanded ? '' : 'line-clamp-2'}">{quoteContext.text}</p>
+				{#if quoteIsClamped || quoteExpanded}
+					<button
+						onclick={() => (quoteExpanded = !quoteExpanded)}
+						class="text-[10px] text-amber-500 hover:text-amber-600 mt-0.5"
+						aria-label={quoteExpanded ? t.notificationItem.ariaCollapse : t.notificationItem.ariaExpand}
+					>{quoteExpanded ? '▲' : '▼'}</button>
+				{/if}
 			{/if}
 		</div>
 	{/if}
