@@ -17,9 +17,9 @@
 	} from '$lib/api/notifications';
 
 	let pushEnabled = $state(false);
-	let pushLoading = $state(false);
+	let pushLoading = $state(true);
 	let repostNextPostEnabled = $state(false);
-	let repostNextPostLoading = $state(false);
+	let repostNextPostLoading = $state(true);
 	let logoutLoading = $state(false);
 	const session = $derived(getSession());
 	let myAvatar = $state<string | undefined>(getSession()?.avatar);
@@ -47,6 +47,7 @@
 				// ignore
 			}
 		}
+		pushLoading = false;
 
 		if (s?.accessJwt) {
 			try {
@@ -55,6 +56,7 @@
 				// ignore
 			}
 		}
+		repostNextPostLoading = false;
 	});
 
 	function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
